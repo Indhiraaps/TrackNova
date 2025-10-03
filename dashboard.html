@@ -10,65 +10,97 @@
   <link rel="icon" type="image/png" href="favicon.png" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
+
   <!-- Navbar -->
-  <header class="bg-blue-600 text-white py-4 shadow-lg">
-    <div class="container mx-auto flex justify-between items-center px-6">
-      <h1 class="text-xl font-bold">TrackNova Dashboard</h1>
-      <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg">Logout</button>
-    </div>
+  <header class="bg-blue-600 text-white py-4 shadow-lg flex justify-between items-center px-6">
+    <h1 class="text-xl font-bold">TrackNova Dashboard</h1>
+    <!-- Hamburger for mobile -->
+    <button id="menuBtn" class="md:hidden text-white text-2xl">&#9776;</button>
+    <button id="logoutBtn" class="hidden md:block bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg">
+      Logout
+    </button>
   </header>
 
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform z-50">
+    <div class="p-4 border-b flex justify-between items-center">
+      <span class="font-bold text-lg">Menu</span>
+      <button id="closeMenu" class="md:hidden text-red-600 font-bold">X</button>
+    </div>
+    <nav class="p-4 space-y-2">
+      <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="addTaskSection">➕ Add Task</button>
+      <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="tasksSection">📋 Tasks</button>
+      <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="notificationsSection">🔔 Notifications</button>
+      <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="historySection">📜 History</button>
+      <!-- Mobile Logout only -->
+      <button id="logoutBtnMobile" class="w-full bg-red-500 text-white px-3 py-2 rounded md:hidden">Logout</button>
+    </nav>
+  </aside>
+
   <!-- Main Content -->
-  <main class="flex-grow container mx-auto px-6 py-6">
+  <main class="flex-grow container mx-auto px-6 py-6 md:ml-64">
     <!-- Welcome -->
     <div class="bg-white rounded-2xl shadow-lg p-6 text-center mb-6">
       <h2 class="text-2xl font-semibold mb-2">Welcome Admin 👋</h2>
       <p class="text-gray-700 mb-2" id="userEmail"></p>
     </div>
 
-    <!-- Add Task Form -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-      <h3 class="text-xl font-semibold mb-4">Add New Task</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <input id="taskTitle" type="text" placeholder="Task Title" class="p-2 border rounded-lg w-full"/>
-        <input id="taskPerson" type="text" placeholder="Assigned To" class="p-2 border rounded-lg w-full"/>
-        <input id="taskLab" type="text" placeholder="Lab Number" class="p-2 border rounded-lg w-full"/>
-        <select id="taskStatus" class="p-2 border rounded-lg w-full">
-          <option value="Pending">Pending</option>
-          <option value="Completed">Completed</option>
-        </select>
+    <!-- Sections -->
+    <section id="addTaskSection" class="content-section">
+      <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <h3 class="text-xl font-semibold mb-4">Add New Task</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <input id="taskTitle" type="text" placeholder="Task Title" class="p-2 border rounded-lg w-full"/>
+          <input id="taskPerson" type="text" placeholder="Assigned To" class="p-2 border rounded-lg w-full"/>
+          <input id="taskLab" type="text" placeholder="Lab Number" class="p-2 border rounded-lg w-full"/>
+          <select id="taskStatus" class="p-2 border rounded-lg w-full">
+            <option value="Pending">Pending</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+        <textarea id="taskDesc" placeholder="Task Description" class="p-2 border rounded-lg w-full mt-3"></textarea>
+        <button id="addTaskBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg mt-3 hover:bg-green-700">Add Task</button>
       </div>
-      <textarea id="taskDesc" placeholder="Task Description" class="p-2 border rounded-lg w-full mt-3"></textarea>
-      <button id="addTaskBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg mt-3 hover:bg-green-700">Add Task</button>
-    </div>
+    </section>
 
-    <!-- Task Table -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 overflow-x-auto">
-      <h3 class="text-xl font-semibold mb-4">Tasks</h3>
-      <table class="w-full table-auto border-collapse">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="p-2 border">Title</th>
-            <th class="p-2 border">Assigned To</th>
-            <th class="p-2 border">Lab</th>
-            <th class="p-2 border">Status</th>
-            <th class="p-2 border">QR</th>
-            <th class="p-2 border">Delete</th>
-          </tr>
-        </thead>
-        <tbody id="tasksTableBody">
-          <tr><td colspan="6" class="p-4 text-center text-gray-500">Loading tasks...</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <section id="tasksSection" class="content-section hidden">
+      <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 overflow-x-auto">
+        <h3 class="text-xl font-semibold mb-4">Tasks</h3>
+        <table class="w-full table-auto border-collapse">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="p-2 border">Title</th>
+              <th class="p-2 border">Assigned To</th>
+              <th class="p-2 border">Lab</th>
+              <th class="p-2 border">Status</th>
+              <th class="p-2 border">QR</th>
+              <th class="p-2 border">Delete</th>
+            </tr>
+          </thead>
+          <tbody id="tasksTableBody">
+            <tr><td colspan="6" class="p-4 text-center text-gray-500">Loading tasks...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-    <!-- Notifications -->
-    <div class="bg-white rounded-2xl shadow-lg p-6">
-      <h3 class="text-xl font-semibold mb-4">Notifications</h3>
-      <ul id="notificationsList" class="space-y-2">
-        <li class="text-gray-500">No notifications yet</li>
-      </ul>
-    </div>
+    <section id="notificationsSection" class="content-section hidden">
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <h3 class="text-xl font-semibold mb-4">Notifications</h3>
+        <ul id="notificationsList" class="space-y-2">
+          <li class="text-gray-500">No notifications yet</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="historySection" class="content-section hidden">
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <h3 class="text-xl font-semibold mb-4">History</h3>
+        <ul id="historyList" class="space-y-2">
+          <li class="text-gray-500">No history yet</li>
+        </ul>
+      </div>
+    </section>
   </main>
 
   <!-- QR Modal -->
@@ -81,17 +113,13 @@
   </div>
 
   <script>
-    // ============================== //
     // Supabase Client
-    // ============================== //
     const supabase = window.supabase.createClient(
       "https://jkynrslsfqwhsvrgzmle.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreW5yc2xzZnF3aHN2cmd6bWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMyNDQsImV4cCI6MjA3MzQwOTI0NH0.HEuMyMWchJYIKH3XGhXavpfmDrdiQeChMyk1WG13C8g"
     );
 
-    // ============================== //
     // DOM Elements
-    // ============================== //
     const tasksTableBody = document.getElementById("tasksTableBody");
     const addTaskBtn = document.getElementById("addTaskBtn");
     const qrModal = document.getElementById("qrModal");
@@ -99,43 +127,50 @@
     const closeQrModalBtn = document.getElementById("closeQrModal");
     const downloadQrBtn = document.getElementById("downloadQrBtn");
     const notificationsList = document.getElementById("notificationsList");
+    const historyList = document.getElementById("historyList");
     const logoutBtn = document.getElementById("logoutBtn");
+    const logoutBtnMobile = document.getElementById("logoutBtnMobile");
     const userEmailEl = document.getElementById("userEmail");
 
-    // ============================== //
-    // Check User Session
-    // ============================== //
+    // Sidebar
+    const menuBtn = document.getElementById("menuBtn");
+    const sidebar = document.getElementById("sidebar");
+    const closeMenu = document.getElementById("closeMenu");
+
+    menuBtn.addEventListener("click", () => sidebar.classList.remove("-translate-x-full"));
+    closeMenu.addEventListener("click", () => sidebar.classList.add("-translate-x-full"));
+
+    document.querySelectorAll(".nav-link").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.getAttribute("data-target");
+        document.querySelectorAll(".content-section").forEach(sec => sec.classList.add("hidden"));
+        document.getElementById(target).classList.remove("hidden");
+        sidebar.classList.add("-translate-x-full");
+      });
+    });
+
+    // Session
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return window.location.href = "index.html";
       userEmailEl.textContent = "Email: " + session.user.email;
     }
 
-    // ============================== //
     // Logout
-    // ============================== //
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    });
+    function handleLogout() {
+      supabase.auth.signOut().then(() => window.location.href = "index.html");
+    }
+    logoutBtn.addEventListener("click", handleLogout);
+    logoutBtnMobile.addEventListener("click", handleLogout);
 
-    // ============================== //
     // Fetch Tasks
-    // ============================== //
     async function fetchTasks() {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .order("created_at", { ascending: false });
-
+      const { data, error } = await supabase.from("tasks").select("*").order("created_at", { ascending: false });
       if (error) return console.error(error);
 
       tasksTableBody.innerHTML = "";
-
       if (!data || data.length === 0) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="6" class="p-4 text-center text-gray-500">No tasks yet</td>`;
-        tasksTableBody.appendChild(tr);
+        tasksTableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">No tasks yet</td></tr>`;
         return;
       }
 
@@ -160,11 +195,8 @@
       attachTaskEvents();
     }
 
-    // ============================== //
-    // Attach Task Buttons
-    // ============================== //
+    // Task Buttons
     function attachTaskEvents() {
-      // Delete Task
       document.querySelectorAll(".delete-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
           const taskId = btn.getAttribute("data-id")?.trim();
@@ -174,22 +206,18 @@
           const { error } = await supabase.from("tasks").delete().eq("task_id", taskId);
           if (error) return alert("Failed to delete task: " + error.message);
 
-          addNotification(`Task deleted successfully: ${taskId}`);
+          addHistory(`Task deleted successfully: ${taskId}`);
           fetchTasks();
         });
       });
 
-      // inside attachTaskEvents -> Generate QR
       document.querySelectorAll(".generate-qr-btn").forEach(btn => {
-        btn.addEventListener("click", async () => {
+        btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-id")?.trim();
           if (!id) return;
-          // instead of text, create URL to item.html
-          const baseUrl = window.location.origin; 
-          const qrLink = `${baseUrl}/item.html?task_id=${id}`;
+          const qrLink = `${window.location.origin}/item.html?task_id=${id}`;
 
           QRCode.toCanvas(qrCodeContainer, qrLink, { width: 180 });
-
           downloadQrBtn.href = qrCodeContainer.toDataURL();
           downloadQrBtn.download = `task_${id}_QR.png`;
 
@@ -199,14 +227,9 @@
       });
     }
 
-    // ============================== //
-    // Close QR Modal
-    // ============================== //
     closeQrModalBtn.addEventListener("click", () => qrModal.classList.add("hidden"));
 
-    // ============================== //
     // Add Task
-    // ============================== //
     addTaskBtn.addEventListener("click", async () => {
       const title = document.getElementById("taskTitle").value.trim();
       const desc = document.getElementById("taskDesc").value.trim();
@@ -217,16 +240,12 @@
       if (!title || !person || !lab) return alert("Please fill all required fields");
 
       const { error } = await supabase.from("tasks").insert([{ 
-        title, 
-        description: desc, 
-        assigned_person: person, 
-        lab_number: lab, 
-        status 
+        title, description: desc, assigned_person: person, lab_number: lab, status 
       }]);
 
       if (error) return alert("Error adding task: " + error.message);
 
-      addNotification("New task added: " + title);
+      addHistory("New task added: " + title);
 
       document.getElementById("taskTitle").value = "";
       document.getElementById("taskDesc").value = "";
@@ -237,26 +256,25 @@
       fetchTasks();
     });
 
-    // ============================== //
-    // Notifications
-    // ============================== //
-    function addNotification(msg) {
-      // remove "No notifications yet" placeholder if present
-      if (notificationsList.children.length === 1 && notificationsList.children[0].textContent === "No notifications yet") {
-        notificationsList.innerHTML = "";
-      }
-
-      const li = document.createElement("li");
-      li.textContent = msg;
-      li.className = "bg-blue-100 text-blue-800 p-2 rounded shadow-sm";
-      notificationsList.prepend(li);
+    // Notifications & History
+    function loadNotifications() {
+      notificationsList.innerHTML = `<li class="text-gray-500">Waiting for user messages...</li>`;
     }
 
-    // ============================== //
+    function addHistory(msg) {
+      if (historyList.children.length === 1 && historyList.children[0].textContent === "No history yet") {
+        historyList.innerHTML = "";
+      }
+      const li = document.createElement("li");
+      li.textContent = msg;
+      li.className = "bg-gray-100 text-gray-800 p-2 rounded shadow-sm";
+      historyList.prepend(li);
+    }
+
     // Initialize
-    // ============================== //
     checkSession();
     fetchTasks();
+    loadNotifications();
   </script>
 </body>
 </html>
