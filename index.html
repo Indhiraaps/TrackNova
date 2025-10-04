@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrackNova - Auth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold text-center mb-6">TrackNova</h1>
+
+    <!-- Register Form -->
+    <div id="register-section">
+      <h2 class="text-xl font-semibold mb-4">Register</h2>
+      <input id="reg-name" type="text" placeholder="Full Name"
+        class="w-full mb-3 p-2 border rounded-lg focus:outline-none focus:ring">
+      <input id="reg-email" type="email" placeholder="Email"
+        class="w-full mb-3 p-2 border rounded-lg focus:outline-none focus:ring">
+      <input id="reg-password" type="password" placeholder="Password"
+        class="w-full mb-3 p-2 border rounded-lg focus:outline-none focus:ring">
+      <p class="text-xs text-gray-500 mb-3">
+        Must contain 8+ chars with uppercase, lowercase, digit, and special character.
+      </p>
+      <button onclick="registerUser()"
+        class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+        Register
+      </button>
+      <p class="mt-4 text-sm text-center">
+        Already have an account?
+        <a href="#" onclick="toggleForm('login')" class="text-blue-600 font-semibold">Login</a>
+      </p>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-section" class="hidden">
+      <h2 class="text-xl font-semibold mb-4">Login</h2>
+      <input id="login-email" type="email" placeholder="Email"
+        class="w-full mb-3 p-2 border rounded-lg focus:outline-none focus:ring">
+      <input id="login-password" type="password" placeholder="Password"
+        class="w-full mb-3 p-2 border rounded-lg focus:outline-none focus:ring">
+      <button onclick="loginUser()"
+        class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+        Login
+      </button>
+      <p class="mt-4 text-sm text-center">
+        Don’t have an account?
+        <a href="#" onclick="toggleForm('register')" class="text-blue-600 font-semibold">Register</a>
+      </p>
+    </div>
+
+    <div id="status" class="mt-4 text-center text-sm"></div>
+  </div>
+
+  <script>
+    // ✅ Correct Supabase initialization
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
+      "https://jkynrslsfqwhsvrgzmle.supabase.co", // replace with your Supabase URL
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreW5yc2xzZnF3aHN2cmd6bWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMyNDQsImV4cCI6MjA3MzQwOTI0NH0.HEuMyMWchJYIKH3XGhXavpfmDrdiQeChMyk1WG13C8g"                     // replace with your Supabase anon key
+    );
+
+    function toggleForm(form) {
+      document.getElementById("register-section").classList.add("hidden");
+      document.getElementById("login-section").classList.add("hidden");
+      if (form === "register") {
+        document.getElementById("register-section").classList.remove("hidden");
+      } else {
+        document.getElementById("login-section").classList.remove("hidden");
+      }
+    }
+
+    function validatePassword(password) {
+      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+      return regex.test(password);
+    }
+
+    async function registerUser() {
+      const name = document.getElementById("reg-name").value.trim();
+      const email = document.getElementById("reg-email").value.trim();
+      const password = document.getElementById("reg-password").value;
+
+      if (!validatePassword(password)) {
+        setStatus("Password does not meet requirements", "red");
+        return;
+      }
+
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: { data: { name } }
+      });
+
+      if (error) {
+        setStatus(error.message, "red");
+      } else {
+        setStatus("✅ Registered successfully! Check email to confirm.", "green");
+        toggleForm("login");
+      }
+    }
+
+    async function loginUser() {
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        setStatus(error.message, "red");
+      } else {
+        setStatus("✅ Login successful! Redirecting...", "green");
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 1500);
+      }
+    }
+
+    function setStatus(message, color) {
+      const status = document.getElementById("status");
+      status.textContent = message;
+      status.className = `mt-4 text-center text-sm text-${color}-600`;
+    }
+  </script>
+</body>
+</html>
