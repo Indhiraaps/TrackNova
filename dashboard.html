@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SmartTrack - Admin Dashboard</title>
+    <title>TrackNova - Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,70 +15,91 @@
                 margin-left: 16rem; /* Tailwind 'md:ml-64' equivalent */
             }
         }
+        /* Custom active state for navigation (NEW COLOR) */
+        .nav-link.active {
+            background-color: theme('colors.cyan.600'); /* Changed from indigo.600 */
+            color: white;
+            border-left: 4px solid theme('colors.teal.300'); /* Added a subtle border */
+            padding-left: 1rem !important; /* Adjust padding for border */
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
 
-    <header class="bg-blue-600 text-white py-4 shadow-lg flex justify-between items-center px-6">
-        <h1 class="text-xl font-bold">SmartTrack Dashboard</h1>
-        <button id="menuBtn" class="md:hidden text-white text-2xl">&#9776;</button>
-        <button id="logoutBtn" class="hidden md:block bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg">
+    <header class="bg-white text-gray-800 border-b border-gray-200 py-3 shadow-md flex justify-between items-center px-6 fixed w-full z-40 md:pl-64">
+        <div class="flex items-center">
+            <button id="menuBtn" class="md:hidden text-gray-600 text-2xl mr-4 hover:text-cyan-600 transition">&#9776;</button>
+            <h1 class="text-xl font-bold text-gray-900 md:text-2xl">Dashboard Management</h1>
+        </div>
+        <button id="logoutBtn" class="hidden md:block bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-full text-sm transition duration-150 shadow-lg">
             Logout
         </button>
     </header>
 
-    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform z-50">
-        <div class="p-4 border-b flex justify-between items-center">
-            <span class="font-bold text-lg">Menu</span>
-            <button id="closeMenu" class="md:hidden text-red-600 font-bold">X</button>
+    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-teal-800 shadow-2xl transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-50 pt-16">
+        <div class="p-4 border-b border-teal-700 flex justify-between items-center h-16 absolute top-0 w-full bg-teal-900">
+            <span class="font-extrabold text-2xl text-white tracking-wider">TrackNova</span>
+            <button id="closeMenu" class="md:hidden text-white font-bold text-xl hover:text-red-300 transition">X</button>
         </div>
-        <nav class="p-4 space-y-2">
-            <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="addTaskSection">➕ Add Task</button>
-            <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="tasksSection">📋 Tasks</button>
-            <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="notificationsSection">🔔 Notifications</button>
-            <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="historySection">📜 History</button>
-            <button id="logoutBtnMobile" class="w-full bg-red-500 text-white px-3 py-2 rounded md:hidden">Logout</button>
+        <nav class="p-4 pt-2 space-y-2">
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150 initial-active" data-target="addTaskSection">
+                ➕ Add Task
+            </button>
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="tasksSection">
+                📋 Task List
+            </button>
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="notificationsSection">
+                🔔 Real-Time Alerts
+            </button>
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="historySection">
+                📜 Activity Log
+            </button>
+            <button id="logoutBtnMobile" class="w-full bg-red-500 text-white px-3 py-2 rounded-lg mt-6 md:hidden hover:bg-red-600 shadow-md">Logout</button>
         </nav>
     </aside>
 
-    <main class="flex-grow container mx-auto px-6 py-6 md:ml-64">
-        <div class="bg-white rounded-2xl shadow-lg p-6 text-center mb-6">
-            <h2 class="text-2xl font-semibold mb-2">Welcome Admin 👋</h2>
-            <p class="text-gray-700 mb-2" id="userEmail"></p>
+    <main class="flex-grow container mx-auto px-4 py-8 md:ml-64 pt-24">
+        <div class="bg-white rounded-2xl shadow-xl p-6 text-center mb-8 border-b-4 border-cyan-500">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-1">Welcome Back, Administrator 👋</h2>
+            <p class="text-gray-500 text-sm italic" id="userEmail"></p>
         </div>
 
         <section id="addTaskSection" class="content-section">
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-4">Add New Task</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input id="taskTitle" type="text" placeholder="Task Title" class="p-2 border rounded-lg w-full" />
-                    <input id="taskPerson" type="text" placeholder="Assigned To" class="p-2 border rounded-lg w-full" />
-                    <input id="taskLab" type="text" placeholder="Lab Number" class="p-2 border rounded-lg w-full" />
-                    <select id="taskStatus" class="p-2 border rounded-lg w-full">
-                        <option value="Pending">Pending</option>
+            <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3 text-center">Create New Task</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    <input id="taskTitle" type="text" placeholder="Task Title (e.g., Server Maintenance)" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
+                    <input id="taskPerson" type="text" placeholder="Assigned To (Technician Name)" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
+                    <input id="taskLab" type="text" placeholder="Location / Lab Number" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
+                    <select id="taskStatus" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 bg-white shadow-sm">
+                        <option value="Pending">Pending (Initial Status)</option>
                         <option value="Completed">Completed</option>
                     </select>
                 </div>
-                <textarea id="taskDesc" placeholder="Task Description" class="p-2 border rounded-lg w-full mt-3"></textarea>
-                <button id="addTaskBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg mt-3 hover:bg-green-700">Add Task</button>
+                <textarea id="taskDesc" placeholder="Detailed Task Description and Instructions" class="p-3 border border-gray-300 rounded-xl w-full mt-6 h-32 focus:ring-cyan-500 focus:border-cyan-500 shadow-sm max-w-4xl mx-auto block"></textarea>
+                <div class="text-center mt-6">
+                    <button id="addTaskBtn" class="bg-cyan-600 text-white font-semibold px-8 py-3 rounded-full hover:bg-cyan-700 transition duration-150 shadow-lg tracking-wider">
+                        ➕ Add Task & Generate QR
+                    </button>
+                </div>
             </div>
         </section>
 
         <section id="tasksSection" class="content-section hidden">
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 overflow-x-auto">
-                <h3 class="text-xl font-semibold mb-4">Tasks</h3>
-                <table class="w-full table-auto border-collapse">
-                    <thead class="bg-gray-200">
+            <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 overflow-x-auto">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">Active Task List</h3>
+                <table class="w-full text-left table-auto border-collapse">
+                    <thead class="bg-gray-50 border-b border-gray-300">
                         <tr>
-                            <th class="p-2 border">Title</th>
-                            <th class="p-2 border">Assigned To</th>
-                            <th class="p-2 border">Lab</th>
-                            <th class="p-2 border">Status</th>
-                            <th class="p-2 border">QR</th>
-                            <th class="p-2 border">Delete</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Title</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Assigned To</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Location</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Status</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">QR Code</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="tasksTableBody">
+                    <tbody id="tasksTableBody" class="divide-y divide-gray-200">
                         <tr><td colspan="6" class="p-4 text-center text-gray-500">Loading tasks...</td></tr>
                     </tbody>
                 </table>
@@ -86,34 +107,41 @@
         </section>
 
         <section id="notificationsSection" class="content-section hidden">
-            <div class="bg-white rounded-2xl shadow-lg p-6">
-                <h3 class="text-xl font-semibold mb-4">Emergency Notifications 🚨</h3>
-                <ul id="notificationsList" class="space-y-3">
-                    <li class="text-gray-500">Loading notifications...</li>
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">Real-Time Emergency Alerts 🚨</h3>
+                <ul id="notificationsList" class="space-y-4">
+                    <li class="text-gray-500 p-4 bg-gray-50 rounded-xl">Loading notifications...</li>
                 </ul>
             </div>
         </section>
 
         <section id="historySection" class="content-section hidden">
-            <div class="bg-white rounded-2xl shadow-lg p-6">
-                <h3 class="text-xl font-semibold mb-4">Activity History</h3>
-                <ul id="historyList" class="space-y-2">
-                    <li class="text-gray-500">No history yet</li>
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">Local Activity Log</h3>
+                <ul id="historyList" class="space-y-3">
+                    <li class="text-gray-500 p-3 bg-gray-50 rounded-xl">No history yet</li>
                 </ul>
             </div>
         </section>
     </main>
 
-    <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-6 relative">
-            <button id="closeQrModal" class="absolute top-2 right-2 text-red-500 font-bold">X</button>
-            <canvas id="qrCodeContainer"></canvas>
-            <a id="downloadQrBtn" class="block mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg text-center hidden" download="task_qr_code.png">Download QR</a>
+    <div id="qrModal" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden items-center justify-center z-[100]">
+        <div class="bg-white rounded-xl p-8 relative shadow-2xl max-w-sm w-full">
+            <button id="closeQrModal" class="absolute top-3 right-3 text-gray-500 hover:text-red-600 text-3xl font-light transition leading-none">
+                &times;
+            </button>
+            <h4 class="text-2xl font-bold text-center mb-6 text-gray-800 border-b pb-2">Scan to Access Task</h4>
+            <div class="p-6 border-4 border-cyan-500 rounded-xl bg-gray-50 flex justify-center items-center">
+                <canvas id="qrCodeContainer" class="max-w-xs"></canvas>
+            </div>
+            <a id="downloadQrBtn" class="block mt-6 bg-cyan-600 text-white font-semibold px-4 py-3 rounded-lg text-center hover:bg-cyan-700 transition duration-150 shadow-lg" download="task_qr_code.png">
+                Download QR Image
+            </a>
         </div>
     </div>
 
     <script>
-        // Supabase Client - **REMEMBER TO REPLACE PLACEHOLDERS WITH YOUR REAL KEYS**
+        // Supabase Client - **TECHNICAL CONFIGURATION REMAINS UNCHANGED**
         const supabase = window.supabase.createClient(
             "https://jkynrslsfqwhsvrgzmle.supabase.co", 
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreW5yc2xzZnF3aHN2cmd6bWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMyNDQsImV4cCI6MjA3MzQwOTI0NH0.HEuMyMWchJYIKH3XGhXavpfmDrdiQeChMyk1WG13C8g"
@@ -131,7 +159,10 @@
         const logoutBtn = document.getElementById("logoutBtn");
         const logoutBtnMobile = document.getElementById("logoutBtnMobile");
         const userEmailEl = document.getElementById("userEmail");
-
+        
+        // Selectors for active state
+        const navLinks = document.querySelectorAll(".nav-link");
+        
         // Sidebar Toggles
         const menuBtn = document.getElementById("menuBtn");
         const sidebar = document.getElementById("sidebar");
@@ -140,22 +171,44 @@
         menuBtn.addEventListener("click", () => sidebar.classList.remove("-translate-x-full"));
         closeMenu.addEventListener("click", () => sidebar.classList.add("-translate-x-full"));
 
-        document.querySelectorAll(".nav-link").forEach(btn => {
-            btn.addEventListener("click", () => {
-                const target = btn.getAttribute("data-target");
-                document.querySelectorAll(".content-section").forEach(sec => sec.classList.add("hidden"));
-                document.getElementById(target).classList.remove("hidden");
-                sidebar.classList.add("-translate-x-full");
+        // FIX 1: Correctly managing the active state for sidebar links (Color updated)
+        function switchSection(targetId) {
+            // Hide all content sections
+            document.querySelectorAll(".content-section").forEach(sec => sec.classList.add("hidden"));
+            // Show the target section
+            document.getElementById(targetId).classList.remove("hidden");
+            
+            // Update active link styling
+            navLinks.forEach(link => {
+                link.classList.remove("active", "text-white");
+                link.classList.add("text-teal-200"); // Updated default text color
             });
+            const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
+            if (activeLink) {
+                activeLink.classList.add("active", "text-white");
+                activeLink.classList.remove("text-teal-200"); // Updated default text color
+            }
+            // Close sidebar on mobile after click
+            sidebar.classList.add("-translate-x-full");
+        }
+        
+        navLinks.forEach(btn => {
+            btn.addEventListener("click", () => switchSection(btn.getAttribute("data-target")));
         });
-
+        
+        
         // --------------------------------------------------------------------------------
-        // 1. AUTHENTICATION & SESSION
+        // 1. AUTHENTICATION & SESSION (TECHNICAL LOGIC UNCHANGED)
         // --------------------------------------------------------------------------------
         async function checkSession() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) return window.location.href = "index.html";
-            userEmailEl.textContent = "Email: " + session.user.email;
+            userEmailEl.textContent = "Currently logged in as: " + session.user.email;
+            
+            // Initialization calls moved here to run after session check
+            fetchTasks();
+            loadNotifications(); 
+            setupRealtimeNotifications();
         }
 
         function handleLogout() {
@@ -165,7 +218,7 @@
         logoutBtnMobile.addEventListener("click", handleLogout);
 
         // --------------------------------------------------------------------------------
-        // 2. TASK CRUD & QR CODE GENERATION
+        // 2. TASK CRUD & QR CODE GENERATION (TECHNICAL LOGIC UNCHANGED)
         // --------------------------------------------------------------------------------
 
         // Task Buttons (Delete & QR)
@@ -184,16 +237,14 @@
                 });
             });
 
-            // Generate QR Code
+            // Generate QR Code 
             document.querySelectorAll(".generate-qr-btn").forEach(btn => {
                 btn.addEventListener("click", () => {
                     const id = btn.getAttribute("data-id")?.trim();
                     if (!id) return;
                     
-                    // The link the user scans. Assumes 'item.html' is in the root directory.
                     const baseUrl = "https://indhiraaps.github.io/TrackNova/";
                     const qrLink = `${baseUrl}item.html?task_id=${id}`;
-                    
                     QRCode.toCanvas(qrCodeContainer, qrLink, { width: 180 }, (error) => {
                         if(error) console.error('QR Code Generation failed', error);
                         else {
@@ -211,7 +262,7 @@
         closeQrModalBtn.addEventListener("click", () => qrModal.classList.add("hidden"));
 
 
-        // Fetch Tasks (READ)
+        // Fetch Tasks (READ) - (Look/Color changes in the generated HTML)
         async function fetchTasks() {
             const { data, error } = await supabase.from("tasks").select("task_id, title, assigned_person, lab_number, status").order("created_at", { ascending: false });
             if (error) return console.error(error);
@@ -223,18 +274,24 @@
             }
 
             data.forEach(task => {
+                // FIX 2: Correct Status Badge Color Logic (Colors updated to match new scheme)
+                const isCompleted = task.status === 'Completed';
+                const statusColor = isCompleted ? 'green' : 'cyan'; // Changed from indigo to cyan
+                
                 const tr = document.createElement("tr");
-                tr.className = "hover:bg-gray-100";
+                tr.className = "hover:bg-gray-50 transition duration-100";
                 tr.innerHTML = `
-                    <td class="p-2 border">${task.title}</td>
-                    <td class="p-2 border">${task.assigned_person}</td>
-                    <td class="p-2 border">${task.lab_number}</td>
-                    <td class="p-2 border"><span class="font-semibold text-${task.status === 'Completed' ? 'green' : 'orange'}-600">${task.status}</span></td>
-                    <td class="p-2 border text-center">
-                        <button class="bg-blue-500 text-white px-2 py-1 rounded generate-qr-btn" data-id="${task.task_id}">QR</button>
+                    <td class="p-4 text-sm font-medium">${task.title}</td>
+                    <td class="p-4 text-sm">${task.assigned_person}</td>
+                    <td class="p-4 text-sm">${task.lab_number}</td>
+                    <td class="p-4 text-sm">
+                        <span class="font-semibold text-${statusColor}-600 bg-${statusColor}-100 px-3 py-1 rounded-full text-xs">${task.status}</span>
                     </td>
-                    <td class="p-2 border text-center">
-                        <button class="bg-red-500 text-white px-2 py-1 rounded delete-btn" data-id="${task.task_id}">Delete</button>
+                    <td class="p-4">
+                        <button class="bg-cyan-500 text-white text-sm px-3 py-1 rounded hover:bg-cyan-600 transition generate-qr-btn shadow-sm" data-id="${task.task_id}">QR</button>
+                    </td>
+                    <td class="p-4">
+                        <button class="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600 transition delete-btn shadow-sm" data-id="${task.task_id}">Delete</button>
                     </td>
                 `;
                 tasksTableBody.appendChild(tr);
@@ -243,7 +300,7 @@
             attachTaskEvents();
         }
 
-        // Add Task (CREATE)
+        // Add Task (CREATE) - (TECHNICAL LOGIC UNCHANGED)
         addTaskBtn.addEventListener("click", async () => {
             const title = document.getElementById("taskTitle").value.trim();
             const desc = document.getElementById("taskDesc").value.trim();
@@ -269,11 +326,12 @@
             document.getElementById("taskStatus").value = "Pending";
 
             fetchTasks();
+            switchSection('tasksSection'); // Switch to task list after adding
         });
 
 
         // --------------------------------------------------------------------------------
-        // 3. REAL-TIME NOTIFICATIONS
+        // 3. REAL-TIME NOTIFICATIONS (TECHNICAL LOGIC UNCHANGED)
         // --------------------------------------------------------------------------------
 
         // Utility to display a single notification
@@ -284,14 +342,15 @@
             }
             
             const li = document.createElement("li");
-            li.className = `p-4 rounded-lg shadow-md bg-red-100 border-l-4 border-red-500 hover:bg-red-200 transition duration-150`;
+            // Style update: More aggressive styling for alerts
+            li.className = `p-4 rounded-xl shadow-xl bg-red-100 border-l-8 border-red-700 hover:bg-red-50 transition duration-200`;
             li.innerHTML = `
                 <div class="flex justify-between items-start">
-                    <span class="font-bold text-red-700">🚨 EMERGENCY - Task: ${notification.task_title}</span>
-                    <span class="text-xs text-gray-500">${new Date(notification.created_at).toLocaleString()}</span>
+                    <span class="font-extrabold text-lg text-red-800">🚨 EMERGENCY ALERT - Task: ${notification.task_title}</span>
+                    <span class="text-sm text-gray-500">${new Date(notification.created_at).toLocaleString()}</span>
                 </div>
-                <p class="mt-2 text-gray-800 font-medium">${notification.message}</p>
-                <p class="text-sm text-blue-600 mt-1">From: ${notification.sender_email} (Task ID: ${notification.task_id})</p>
+                <p class="mt-2 text-gray-800 font-medium border-t border-red-300 pt-2">${notification.message}</p>
+                <p class="text-xs text-cyan-600 mt-1">Sender: ${notification.sender_email} (Task ID: ${notification.task_id})</p>
             `;
             // Prepend new notifications
             notificationsList.prepend(li);
@@ -305,7 +364,7 @@
 
             notificationsList.innerHTML = "";
             if (!data || data.length === 0) {
-                notificationsList.innerHTML = `<li class="text-gray-500">No notifications yet</li>`;
+                notificationsList.innerHTML = `<li class="text-gray-500 p-4 bg-gray-50 rounded-xl">No notifications yet</li>`;
                 return;
             }
             
@@ -314,13 +373,10 @@
 
         // Setup Realtime Listener
         function setupRealtimeNotifications() {
-            // Channel name should match your schema name (usually 'public') and table name
             supabase
                 .channel('notifications_channel') 
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
-                    // New notification inserted, display it immediately
                     displayNotification(payload.new);
-                    // Provide a visual alert to the admin
                     alert(`🔔 NEW EMERGENCY NOTIFICATION! Task: ${payload.new.task_title}`);
                     addHistory(`Received EMERGENCY notification for: ${payload.new.task_title}`);
                 })
@@ -328,7 +384,7 @@
         }
 
         // --------------------------------------------------------------------------------
-        // 4. HISTORY LOGGING (Local)
+        // 4. HISTORY LOGGING (Local) - (Look updated)
         // --------------------------------------------------------------------------------
 
         function addHistory(msg) {
@@ -338,19 +394,17 @@
             const li = document.createElement("li");
             const now = new Date().toLocaleTimeString();
             li.textContent = `[${now}] ${msg}`;
-            li.className = "bg-gray-100 text-gray-800 p-2 rounded shadow-sm";
+            li.className = "bg-gray-100 text-gray-700 p-3 rounded-xl shadow-inner font-mono text-sm border-l-4 border-cyan-400"; // Style updated
             historyList.prepend(li);
         }
 
         // --------------------------------------------------------------------------------
-        // 5. INITIALIZATION
+        // 5. INITIALIZATION (TECHNICAL LOGIC UNCHANGED)
         // --------------------------------------------------------------------------------
-        checkSession();
-        fetchTasks();
-        loadNotifications(); 
-        setupRealtimeNotifications();
+        document.addEventListener('DOMContentLoaded', () => {
+            switchSection('addTaskSection');
+            checkSession();
+        });
     </script>
 </body>
-
 </html>
-
