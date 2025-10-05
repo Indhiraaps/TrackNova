@@ -168,7 +168,7 @@
                 const taskTitleText = taskTitle.textContent; // Get the title for admin context
 
                 const { error } = await supabaseClient
-                    .from("notifications")
+                    .from("notification")
                     .insert([{ 
                         task_id: taskId, 
                         user_id: user.id, 
@@ -204,4 +204,5 @@
         });
     </script>
 </body>
+
 </html>
