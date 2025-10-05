@@ -29,7 +29,7 @@
     <header class="bg-white text-gray-800 border-b border-gray-200 py-3 shadow-md flex justify-between items-center px-6 fixed w-full z-40 md:pl-64">
         <div class="flex items-center">
             <button id="menuBtn" class="md:hidden text-gray-600 text-2xl mr-4 hover:text-cyan-600 transition">&#9776;</button>
-            <h1 class="text-xl font-bold text-gray-900 md:text-2xl">Dashboard Management</h1>
+            <h1 class="text-xl font-bold text-gray-900 md:text-2xl">🗂️Dashboard Management</h1>
         </div>
         <button id="logoutBtn" class="hidden md:block bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-full text-sm transition duration-150 shadow-lg">
             Logout
@@ -372,16 +372,52 @@
         }
 
         // Setup Realtime Listener
-        function setupRealtimeNotifications() {
-            supabase
-                .channel('notifications_channel') 
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
-                    displayNotification(payload.new);
-                    alert(`🔔 NEW EMERGENCY NOTIFICATION! Task: ${payload.new.task_title}`);
-                    addHistory(`Received EMERGENCY notification for: ${payload.new.task_title}`);
-                })
-                .subscribe();
-        }
+        // REVISED function setupRealtimeNotifications
+function setupRealtimeNotifications() {
+    supabase
+        .channel('notifications_channel') 
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            // FIX 1: Change table name from 'notifications' (plural) to 'notification' (singular)
+            table: 'notification' 
+        }, async (payload) => {
+            
+            // FIX 2: Fetch the task title and sender email for the alert/history log, 
+            // as the 'notification' table itself only stores IDs and the message.
+
+            // The 'payload.new' object contains the newly inserted row data (task_id, message, etc.)
+            const newTaskNotification = payload.new;
+
+            // Fetch the required details from the tasks table using the task_id
+            const { data: taskData, error: taskError } = await supabase
+                .from('tasks')
+                .select('title')
+                .eq('task_id', newTaskNotification.task_id)
+                .single();
+
+            // Check if task data was retrieved
+            if (taskError) {
+                console.error("Error fetching task details for notification:", taskError);
+                // Fallback: use a generic title
+                newTaskNotification.task_title = "Unknown Task"; 
+            } else {
+                newTaskNotification.task_title = taskData.title;
+            }
+
+            // NOTE: The sender_email column is not in your Notification Table schema, 
+            // so if the user's interface is not sending it, you'd need to fetch the sender's details 
+            // via user_id. For now, we'll keep the existing logic structure but acknowledge this missing step.
+            
+            // The displayNotification function already handles formatting the incoming object
+            displayNotification(newTaskNotification);
+            
+            // The alert uses the fetched title (or fallback)
+            alert(`🔔 NEW EMERGENCY NOTIFICATION! Task: ${newTaskNotification.task_title}`);
+            addHistory(`Received EMERGENCY notification for: ${newTaskNotification.task_title}`);
+        })
+        .subscribe();
+}
 
         // --------------------------------------------------------------------------------
         // 4. HISTORY LOGGING (Local) - (Look updated)
