@@ -171,7 +171,7 @@
         menuBtn.addEventListener("click", () => sidebar.classList.remove("-translate-x-full"));
         closeMenu.addEventListener("click", () => sidebar.classList.add("-translate-x-full"));
 
-        // FIX 1: Correctly managing the active state for sidebar links (Color updated)
+        // Correctly managing the active state for sidebar links
         function switchSection(targetId) {
             // Hide all content sections
             document.querySelectorAll(".content-section").forEach(sec => sec.classList.add("hidden"));
@@ -181,12 +181,12 @@
             // Update active link styling
             navLinks.forEach(link => {
                 link.classList.remove("active", "text-white");
-                link.classList.add("text-teal-200"); // Updated default text color
+                link.classList.add("text-teal-200");
             });
             const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
             if (activeLink) {
                 activeLink.classList.add("active", "text-white");
-                activeLink.classList.remove("text-teal-200"); // Updated default text color
+                activeLink.classList.remove("text-teal-200");
             }
             // Close sidebar on mobile after click
             sidebar.classList.add("-translate-x-full");
@@ -198,14 +198,14 @@
         
         
         // --------------------------------------------------------------------------------
-        // 1. AUTHENTICATION & SESSION (TECHNICAL LOGIC UNCHANGED)
+        // 1. AUTHENTICATION & SESSION
         // --------------------------------------------------------------------------------
         async function checkSession() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) return window.location.href = "index.html";
             userEmailEl.textContent = "Currently logged in as: " + session.user.email;
             
-            // Initialization calls moved here to run after session check
+            // Initialization calls
             fetchTasks();
             loadNotifications(); 
             setupRealtimeNotifications();
@@ -218,7 +218,7 @@
         logoutBtnMobile.addEventListener("click", handleLogout);
 
         // --------------------------------------------------------------------------------
-        // 2. TASK CRUD & QR CODE GENERATION (TECHNICAL LOGIC UNCHANGED)
+        // 2. TASK CRUD & QR CODE GENERATION
         // --------------------------------------------------------------------------------
 
         // Task Buttons (Delete & QR)
@@ -243,7 +243,8 @@
                     const id = btn.getAttribute("data-id")?.trim();
                     if (!id) return;
                     
-                    const baseUrl = "https://indhiraaps.github.io/TrackNova/";
+                    // NOTE: Use the absolute path to item.html on your hosting service
+                    const baseUrl = "https://indhiraaps.github.io/TrackNova/"; 
                     const qrLink = `${baseUrl}item.html?task_id=${id}`;
                     QRCode.toCanvas(qrCodeContainer, qrLink, { width: 180 }, (error) => {
                         if(error) console.error('QR Code Generation failed', error);
@@ -262,7 +263,7 @@
         closeQrModalBtn.addEventListener("click", () => qrModal.classList.add("hidden"));
 
 
-        // Fetch Tasks (READ) - (Look/Color changes in the generated HTML)
+        // Fetch Tasks (READ)
         async function fetchTasks() {
             const { data, error } = await supabase.from("tasks").select("task_id, title, assigned_person, lab_number, status").order("created_at", { ascending: false });
             if (error) return console.error(error);
@@ -274,9 +275,8 @@
             }
 
             data.forEach(task => {
-                // FIX 2: Correct Status Badge Color Logic (Colors updated to match new scheme)
                 const isCompleted = task.status === 'Completed';
-                const statusColor = isCompleted ? 'green' : 'cyan'; // Changed from indigo to cyan
+                const statusColor = isCompleted ? 'green' : 'cyan';
                 
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-gray-50 transition duration-100";
@@ -300,7 +300,7 @@
             attachTaskEvents();
         }
 
-        // Add Task (CREATE) - (TECHNICAL LOGIC UNCHANGED)
+        // Add Task (CREATE)
         addTaskBtn.addEventListener("click", async () => {
             const title = document.getElementById("taskTitle").value.trim();
             const desc = document.getElementById("taskDesc").value.trim();
@@ -331,7 +331,7 @@
 
 
         // --------------------------------------------------------------------------------
-        // 3. REAL-TIME NOTIFICATIONS (TECHNICAL LOGIC UNCHANGED)
+        // 3. REAL-TIME NOTIFICATIONS (THE FIXES ARE HERE)
         // --------------------------------------------------------------------------------
 
         // Utility to display a single notification
@@ -358,7 +358,8 @@
 
         // Load existing notifications
         async function loadNotifications() {
-            const { data, error } = await supabase.from("notifications").select("*").order("created_at", { ascending: false });
+            // FIX 1: Corrected table name to 'notification' (singular) for fetching
+            const { data, error } = await supabase.from("notification").select("*").order("created_at", { ascending: false });
             
             if (error) return console.error("Error loading notifications:", error);
 
@@ -372,55 +373,30 @@
         }
 
         // Setup Realtime Listener
-        // REVISED function setupRealtimeNotifications
-function setupRealtimeNotifications() {
-    supabase
-        .channel('notifications_channel') 
-        .on('postgres_changes', { 
-            event: 'INSERT', 
-            schema: 'public', 
-            // FIX 1: Change table name from 'notifications' (plural) to 'notification' (singular)
-            table: 'notification' 
-        }, async (payload) => {
-            
-            // FIX 2: Fetch the task title and sender email for the alert/history log, 
-            // as the 'notification' table itself only stores IDs and the message.
+        function setupRealtimeNotifications() {
+            supabase
+                .channel('notifications_channel') 
+                .on('postgres_changes', { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    // FIX 2: Corrected table name to 'notification' (singular) for Realtime listener
+                    table: 'notification' 
+                }, (payload) => {
+                    
+                    // FIX 3: Since you added task_title and sender_email to the notification table, 
+                    // the full data is in payload.new, no need for the second fetch.
+                    const newTaskNotification = payload.new;
 
-            // The 'payload.new' object contains the newly inserted row data (task_id, message, etc.)
-            const newTaskNotification = payload.new;
-
-            // Fetch the required details from the tasks table using the task_id
-            const { data: taskData, error: taskError } = await supabase
-                .from('tasks')
-                .select('title')
-                .eq('task_id', newTaskNotification.task_id)
-                .single();
-
-            // Check if task data was retrieved
-            if (taskError) {
-                console.error("Error fetching task details for notification:", taskError);
-                // Fallback: use a generic title
-                newTaskNotification.task_title = "Unknown Task"; 
-            } else {
-                newTaskNotification.task_title = taskData.title;
-            }
-
-            // NOTE: The sender_email column is not in your Notification Table schema, 
-            // so if the user's interface is not sending it, you'd need to fetch the sender's details 
-            // via user_id. For now, we'll keep the existing logic structure but acknowledge this missing step.
-            
-            // The displayNotification function already handles formatting the incoming object
-            displayNotification(newTaskNotification);
-            
-            // The alert uses the fetched title (or fallback)
-            alert(`🔔 NEW EMERGENCY NOTIFICATION! Task: ${newTaskNotification.task_title}`);
-            addHistory(`Received EMERGENCY notification for: ${newTaskNotification.task_title}`);
-        })
-        .subscribe();
-}
+                    displayNotification(newTaskNotification);
+                    
+                    alert(`🔔 NEW EMERGENCY NOTIFICATION! Task: ${newTaskNotification.task_title}`);
+                    addHistory(`Received EMERGENCY notification for: ${newTaskNotification.task_title} from ${newTaskNotification.sender_email}`);
+                })
+                .subscribe();
+        }
 
         // --------------------------------------------------------------------------------
-        // 4. HISTORY LOGGING (Local) - (Look updated)
+        // 4. HISTORY LOGGING (Local)
         // --------------------------------------------------------------------------------
 
         function addHistory(msg) {
@@ -435,7 +411,7 @@ function setupRealtimeNotifications() {
         }
 
         // --------------------------------------------------------------------------------
-        // 5. INITIALIZATION (TECHNICAL LOGIC UNCHANGED)
+        // 5. INITIALIZATION
         // --------------------------------------------------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             switchSection('addTaskSection');
