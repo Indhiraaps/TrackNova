@@ -191,7 +191,8 @@
                     if (!id) return;
                     
                     // The link the user scans. Assumes 'item.html' is in the root directory.
-                    const qrLink = `${window.location.origin}/TrackNova/item.html?task_id=${id}`; 
+                    const baseUrl = "https://indhiraaps.github.io/TrackNova/";
+                    const qrLink = `${baseUrl}item.html?task_id=${id}`;
                     
                     QRCode.toCanvas(qrCodeContainer, qrLink, { width: 180 }, (error) => {
                         if(error) console.error('QR Code Generation failed', error);
@@ -352,3 +353,4 @@
 </body>
 
 </html>
+
