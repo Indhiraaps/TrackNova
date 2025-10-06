@@ -15,12 +15,12 @@
                 margin-left: 16rem; /* Tailwind 'md:ml-64' equivalent */
             }
         }
-        /* Custom active state for navigation (NEW COLOR) */
+        /* Custom active state for navigation */
         .nav-link.active {
-            background-color: theme('colors.cyan.600'); /* Changed from indigo.600 */
+            background-color: theme('colors.cyan.600');
             color: white;
-            border-left: 4px solid theme('colors.teal.300'); /* Added a subtle border */
-            padding-left: 1rem !important; /* Adjust padding for border */
+            border-left: 4px solid theme('colors.teal.300');
+            padding-left: 1rem !important;
         }
     </style>
 </head>
@@ -67,13 +67,21 @@
         <section id="addTaskSection" class="content-section">
             <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3 text-center">Create New Task</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                    <input id="taskTitle" type="text" placeholder="Task Title (e.g., Server Maintenance)" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                    <input id="taskTitle" type="text" placeholder="Task Title (e.g., Server Maintenance)" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm col-span-2" />
                     <input id="taskPerson" type="text" placeholder="Assigned To (Technician Name)" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
+                    
                     <input id="taskLab" type="text" placeholder="Location / Lab Number" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
+                    
+                    <select id="taskPriority" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 bg-white shadow-sm">
+                        <option value="Medium" selected>Priority: Medium</option>
+                        <option value="High" class="text-red-600 font-bold">Priority: High ⚠️</option>
+                        <option value="Low" class="text-green-600">Priority: Low</option>
+                    </select>
+
                     <select id="taskStatus" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 bg-white shadow-sm">
-                        <option value="Pending">Pending (Initial Status)</option>
-                        <option value="Completed">Completed</option>
+                        <option value="Pending">Status: Pending (Initial)</option>
+                        <option value="Completed">Status: Completed</option>
                     </select>
                 </div>
                 <textarea id="taskDesc" placeholder="Detailed Task Description and Instructions" class="p-3 border border-gray-300 rounded-xl w-full mt-6 h-32 focus:ring-cyan-500 focus:border-cyan-500 shadow-sm max-w-4xl mx-auto block"></textarea>
@@ -94,13 +102,13 @@
                             <th class="p-4 text-sm font-semibold text-gray-600">Title</th>
                             <th class="p-4 text-sm font-semibold text-gray-600">Assigned To</th>
                             <th class="p-4 text-sm font-semibold text-gray-600">Location</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600">Status</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Priority</th> <th class="p-4 text-sm font-semibold text-gray-600">Status</th>
                             <th class="p-4 text-sm font-semibold text-gray-600">QR Code</th>
                             <th class="p-4 text-sm font-semibold text-gray-600">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="tasksTableBody" class="divide-y divide-gray-200">
-                        <tr><td colspan="6" class="p-4 text-center text-gray-500">Loading tasks...</td></tr>
+                        <tr><td colspan="7" class="p-4 text-center text-gray-500">Loading tasks...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -218,10 +226,10 @@
         logoutBtnMobile.addEventListener("click", handleLogout);
 
         // --------------------------------------------------------------------------------
-        // 2. TASK CRUD & QR CODE GENERATION
+        // 2. TASK CRUD & QR CODE GENERATION (Updated for Priority)
         // --------------------------------------------------------------------------------
 
-        // Task Buttons (Delete & QR)
+        // Task Buttons (Delete & QR) - Logic remains the same
         function attachTaskEvents() {
             // Delete Task
             document.querySelectorAll(".delete-btn").forEach(btn => {
@@ -237,13 +245,12 @@
                 });
             });
 
-            // Generate QR Code 
+            // Generate QR Code - Logic remains the same
             document.querySelectorAll(".generate-qr-btn").forEach(btn => {
                 btn.addEventListener("click", () => {
                     const id = btn.getAttribute("data-id")?.trim();
                     if (!id) return;
                     
-                    // NOTE: Use the absolute path to item.html on your hosting service
                     const baseUrl = "https://indhiraaps.github.io/TrackNova/"; 
                     const qrLink = `${baseUrl}item.html?task_id=${id}`;
                     QRCode.toCanvas(qrCodeContainer, qrLink, { width: 180 }, (error) => {
@@ -263,14 +270,18 @@
         closeQrModalBtn.addEventListener("click", () => qrModal.classList.add("hidden"));
 
 
-        // Fetch Tasks (READ)
+        // Fetch Tasks (READ) - Updated to include 'priority' column
         async function fetchTasks() {
-            const { data, error } = await supabase.from("tasks").select("task_id, title, assigned_person, lab_number, status").order("created_at", { ascending: false });
+            const { data, error } = await supabase
+                .from("tasks")
+                .select("task_id, title, assigned_person, lab_number, status, priority") // <-- Added priority
+                .order("created_at", { ascending: false });
+            
             if (error) return console.error(error);
 
             tasksTableBody.innerHTML = "";
             if (!data || data.length === 0) {
-                tasksTableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">No tasks yet</td></tr>`;
+                tasksTableBody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-500">No tasks yet</td></tr>`; // <-- colspan updated
                 return;
             }
 
@@ -278,6 +289,16 @@
                 const isCompleted = task.status === 'Completed';
                 const statusColor = isCompleted ? 'green' : 'cyan';
                 
+                // Priority Styling Logic
+                let priorityClass = '';
+                if (task.priority === 'High') {
+                    priorityClass = 'bg-red-200 text-red-800 font-bold';
+                } else if (task.priority === 'Medium') {
+                    priorityClass = 'bg-yellow-100 text-yellow-800 font-medium';
+                } else {
+                    priorityClass = 'bg-green-100 text-green-800';
+                }
+
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-gray-50 transition duration-100";
                 tr.innerHTML = `
@@ -285,6 +306,8 @@
                     <td class="p-4 text-sm">${task.assigned_person}</td>
                     <td class="p-4 text-sm">${task.lab_number}</td>
                     <td class="p-4 text-sm">
+                        <span class="px-3 py-1 rounded-full text-xs ${priorityClass}">${task.priority}</span>
+                    </td> <td class="p-4 text-sm">
                         <span class="font-semibold text-${statusColor}-600 bg-${statusColor}-100 px-3 py-1 rounded-full text-xs">${task.status}</span>
                     </td>
                     <td class="p-4">
@@ -300,18 +323,24 @@
             attachTaskEvents();
         }
 
-        // Add Task (CREATE)
+        // Add Task (CREATE) - Updated to include 'priority'
         addTaskBtn.addEventListener("click", async () => {
             const title = document.getElementById("taskTitle").value.trim();
             const desc = document.getElementById("taskDesc").value.trim();
             const person = document.getElementById("taskPerson").value.trim();
             const lab = document.getElementById("taskLab").value.trim();
             const status = document.getElementById("taskStatus").value;
+            const priority = document.getElementById("taskPriority").value; // <-- Get Priority
 
             if (!title || !person || !lab) return alert("Please fill all required fields");
 
             const { error } = await supabase.from("tasks").insert([{ 
-                title, description: desc, assigned_person: person, lab_number: lab, status 
+                title, 
+                description: desc, 
+                assigned_person: person, 
+                lab_number: lab, 
+                status,
+                priority // <-- Insert Priority
             }]);
 
             if (error) return alert("Error adding task: " + error.message);
@@ -324,6 +353,7 @@
             document.getElementById("taskPerson").value = "";
             document.getElementById("taskLab").value = "";
             document.getElementById("taskStatus").value = "Pending";
+            document.getElementById("taskPriority").value = "Medium"; // <-- Reset Priority
 
             fetchTasks();
             switchSection('tasksSection'); // Switch to task list after adding
@@ -331,7 +361,7 @@
 
 
         // --------------------------------------------------------------------------------
-        // 3. REAL-TIME NOTIFICATIONS (THE FIXES ARE HERE)
+        // 3. REAL-TIME NOTIFICATIONS (FIXED)
         // --------------------------------------------------------------------------------
 
         // Utility to display a single notification
@@ -342,7 +372,7 @@
             }
             
             const li = document.createElement("li");
-            // Style update: More aggressive styling for alerts
+            // Style update: Aggressive styling for alerts
             li.className = `p-4 rounded-xl shadow-xl bg-red-100 border-l-8 border-red-700 hover:bg-red-50 transition duration-200`;
             li.innerHTML = `
                 <div class="flex justify-between items-start">
@@ -356,9 +386,8 @@
             notificationsList.prepend(li);
         }
 
-        // Load existing notifications
+        // Load existing notifications - Corrected table name
         async function loadNotifications() {
-            // FIX 1: Corrected table name to 'notification' (singular) for fetching
             const { data, error } = await supabase.from("notification").select("*").order("created_at", { ascending: false });
             
             if (error) return console.error("Error loading notifications:", error);
@@ -372,19 +401,16 @@
             data.forEach(displayNotification);
         }
 
-        // Setup Realtime Listener
+        // Setup Realtime Listener - Corrected table name and simplified payload handling
         function setupRealtimeNotifications() {
             supabase
                 .channel('notifications_channel') 
                 .on('postgres_changes', { 
                     event: 'INSERT', 
                     schema: 'public', 
-                    // FIX 2: Corrected table name to 'notification' (singular) for Realtime listener
-                    table: 'notification' 
+                    table: 'notification' // Corrected table name
                 }, (payload) => {
-                    
-                    // FIX 3: Since you added task_title and sender_email to the notification table, 
-                    // the full data is in payload.new, no need for the second fetch.
+                    // Full data is now in payload.new due to denormalization
                     const newTaskNotification = payload.new;
 
                     displayNotification(newTaskNotification);
