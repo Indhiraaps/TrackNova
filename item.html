@@ -3,51 +3,92 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SmartTrack - Task Details</title>
+    <title>TrackNova | Task Dispatch</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <style>
-        .status-pending { color: orange; font-weight: bold; }
-        .status-completed { color: green; font-weight: bold; }
+        /* Status Styling */
+        .status-Pending { color: #f59e0b; font-weight: 700; background-color: #fffbeb; padding: 4px 8px; border-radius: 6px; }
+        .status-Completed { color: #10b981; font-weight: 700; background-color: #ecfdf5; padding: 4px 8px; border-radius: 6px; }
+        
+        /* Priority Styling */
+        .priority-High { color: #dc2626; font-weight: 700; } /* Red */
+        .priority-Medium { color: #f59e0b; font-weight: 700; } /* Amber */
+        .priority-Low { color: #3b82f6; font-weight: 700; } /* Blue */
+        
+        /* Utility for loading state */
+        .skeleton {
+            animation: pulse 1.5s infinite;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 sm:p-6">
 
-    <div class="w-full max-w-2xl bg-white p-6 rounded-2xl shadow-lg">
+    <div class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-xl shadow-2xl border-t-8 border-blue-600 transition-all duration-300">
 
-        <div id="initialState" class="text-center">
-            <h1 class="text-xl font-bold mb-4">Loading...</h1>
+        <div id="initialState" class="text-center p-12">
+            <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <h1 class="text-xl font-semibold mt-4 text-gray-700">Connecting to TrackNova...</h1>
         </div>
 
-        <div id="loginSection" class="hidden space-y-3">
-            <h1 class="text-2xl font-bold mb-4 text-center text-blue-600">Secure Access Required</h1>
-            <input id="email" type="email" placeholder="Email" class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
-            <input id="password" type="password" placeholder="Password" class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
-            <button id="loginBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition">View Task</button>
-            <p id="loginStatus" class="text-red-500 text-center hidden font-medium"></p>
+        <div id="loginSection" class="hidden space-y-5">
+            <h1 class="text-3xl font-extrabold mb-6 text-center text-gray-900 border-b pb-3">Secure Task Dispatch</h1>
+            <input id="email" type="email" placeholder="Technician Email" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base shadow-sm transition-shadow"/>
+            <input id="password" type="password" placeholder="Password" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base shadow-sm transition-shadow"/>
+            <button id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition duration-200 font-bold text-lg shadow-md hover:shadow-lg">
+                Authenticate & View Task
+            </button>
+            <p id="loginStatus" class="text-red-600 text-center hidden font-medium text-sm"></p>
         </div>
 
-        <div id="taskSection" class="hidden mt-6">
-            <h1 class="text-2xl font-bold mb-4 text-center text-blue-600">Task Details (Secure)</h1>
+        <div id="taskSection" class="hidden">
+            <h1 class="text-2xl font-bold mb-6 text-center text-gray-800 border-b pb-3">Maintenance Task Details</h1>
 
-            <div id="taskDetails" class="space-y-3 p-6 border-2 border-blue-100 rounded-xl bg-blue-50">
-                <p><strong>Title:</strong> <span id="taskTitle"></span></p>
-                <p><strong>Assigned Person:</strong> <span id="taskPerson"></span></p>
-                <p><strong>Lab Number:</strong> <span id="taskLab"></span></p>
-                <p><strong>Status:</strong> <span id="taskStatus" class="font-bold"></span></p>
-                <p class="border-t pt-3"><strong>Description:</strong> <span id="taskDescription" class="block mt-1 text-gray-700"></span></p>
+            <div id="taskDetails" class="space-y-4 p-6 border-2 border-gray-200 rounded-xl bg-white shadow-inner">
+                <div class="flex justify-between items-start border-b pb-3">
+                    <p class="text-xl font-bold text-gray-900 leading-tight" id="taskTitle"></p>
+                    <span id="taskStatus" class="text-sm"></span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 text-sm text-gray-700">
+                    <p><strong>Assigned To:</strong> <span id="taskPerson" class="font-medium text-gray-800"></span></p>
+                    <p><strong>Lab/Asset:</strong> <span id="taskLab" class="font-medium text-gray-800"></span></p>
+                    <p><strong>Priority:</strong> <span id="taskPriority" class="text-base"></span></p>
+                    <p><strong>Task ID:</strong> <span class="font-mono text-gray-500 text-xs">${taskId || '...'}</span></p>
+                </div>
+
+                <div class="border-t pt-4">
+                    <p class="font-semibold text-gray-800 mb-2">Description:</p>
+                    <p id="taskDescription" class="text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg"></p>
+                </div>
             </div>
 
-            <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <h2 class="text-xl font-semibold mb-2 text-red-600">🚨 Send Emergency Notification</h2>
-                <textarea id="notificationMessage" class="w-full border rounded-lg p-2 focus:ring-red-500 focus:border-red-500" rows="3" placeholder="Describe the issue urgently..."></textarea>
-                <button id="sendNotification" class="mt-3 w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition">Send Notification</button>
-                <p id="statusMessage" class="mt-2 text-green-600 text-center font-medium hidden">✅ Notification sent successfully!</p>
+            <button id="completeTaskBtn" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg transition duration-200 font-bold text-lg shadow-lg hover:shadow-xl disabled:bg-gray-400 disabled:shadow-none">
+                ✅ Mark as Completed
+            </button>
+            <p id="completeStatusMessage" class="mt-3 text-center font-medium text-sm hidden"></p>
+
+            <div class="mt-8 p-5 bg-red-50 border border-red-300 rounded-xl shadow-md">
+                <h2 class="text-xl font-bold mb-3 text-red-700 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Emergency Alert to Admin
+                </h2>
+                <textarea id="notificationMessage" class="w-full border border-red-200 rounded-lg p-3 focus:ring-red-500 focus:border-red-500" rows="3" placeholder="Describe critical failure or blocked task..."></textarea>
+                <button id="sendNotification" class="mt-3 w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition duration-200 font-medium">Send Urgent Notification</button>
+                <p id="statusMessage" class="mt-2 text-center font-medium text-sm hidden"></p>
             </div>
             
-            <button id="logoutBtn" class="w-full mt-4 text-sm text-gray-500 hover:text-red-500">Logout</button>
+            <button id="logoutBtn" class="w-full mt-6 text-sm text-gray-500 hover:text-red-500 transition duration-150">Logout of Secure Session</button>
         </div>
-
     </div>
 
     <script>
@@ -55,6 +96,7 @@
 
             // ---------------- Supabase Setup ----------------
             const SUPABASE_URL = "https://jkynrslsfqwhsvrgzmle.supabase.co"; 
+            // NOTE: Replace this key with your current Supabase Public Anon Key
             const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreW5yc2xzZnF3aHN2cmd6bWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMyNDQsImV4cCI6MjA3MzQwOTI0NH0.HEuMyMWchJYIKH3XGhXavpfmDrdiQeChMyk1WG13C8g"; 
             const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -70,22 +112,32 @@
             const taskTitle = document.getElementById("taskTitle");
             const taskPerson = document.getElementById("taskPerson");
             const taskLab = document.getElementById("taskLab");
+            const taskPriority = document.getElementById("taskPriority");
             const taskStatus = document.getElementById("taskStatus");
-            const taskDescription = document.getElementById("taskDescription"); // Renamed from taskNotes
+            const taskDescription = document.getElementById("taskDescription");
             const logoutBtn = document.getElementById("logoutBtn");
+
+            const completeTaskBtn = document.getElementById("completeTaskBtn");
+            const completeStatusMessage = document.getElementById("completeStatusMessage");
 
             const notificationMessage = document.getElementById("notificationMessage");
             const sendNotification = document.getElementById("sendNotification");
             const statusMessage = document.getElementById("statusMessage");
 
-            // ✅ CRITICAL FIX: Use 'task_id' as parameter name
             const urlParams = new URLSearchParams(window.location.search);
             const taskId = urlParams.get("task_id"); 
             
             if (!taskId) {
-                initialState.innerHTML = `<h1 class="text-red-500">Error: Missing Task ID in URL.</h1>`;
+                initialState.innerHTML = `<h1 class="text-2xl text-red-600 font-bold mt-4">Error: Missing Task ID in URL.</h1><p class="mt-2 text-gray-500">Please scan a valid QR code.</p>`;
                 return;
             }
+
+            // Display Task ID in the UI before data loads
+            document.querySelector('#taskDetails p:last-child span').textContent = taskId;
+
+
+            let currentTaskData = null;
+            let currentUserId = null;
 
             // ---------------- View Management ----------------
             function showLogin() {
@@ -95,6 +147,7 @@
             }
 
             function showTaskDetails(task) {
+                currentTaskData = task;
                 initialState.classList.add("hidden");
                 loginSection.classList.add("hidden");
                 taskSection.classList.remove("hidden");
@@ -103,23 +156,55 @@
                 taskTitle.textContent = task.title;
                 taskPerson.textContent = task.assigned_person;
                 taskLab.textContent = task.lab_number;
-                taskDescription.textContent = task.description || "No description provided.";
+                taskDescription.textContent = task.description || "No detailed description provided by administrator.";
                 
-                // Status Styling
-                taskStatus.textContent = task.status;
-                taskStatus.className = task.status === 'Completed' ? 'status-completed' : 'status-pending';
+                // Priority Styling
+                taskPriority.textContent = task.priority;
+                taskPriority.className = `priority-${task.priority}`;
 
-                // NOTE: Removed `fetchNotifications()` here for simplicity; you can add it back later if needed
+                // Status Styling & Button Control
+                taskStatus.textContent = task.status;
+                taskStatus.className = `status-${task.status}`;
+
+                if (task.status === 'Completed') {
+                    completeTaskBtn.disabled = true;
+                    completeTaskBtn.textContent = "Task Already Completed";
+                    completeTaskBtn.classList.replace("bg-green-600", "bg-gray-500");
+                } else {
+                    completeTaskBtn.disabled = false;
+                    completeTaskBtn.textContent = "✅ Mark as Completed";
+                    completeTaskBtn.classList.replace("bg-gray-500", "bg-green-600");
+                }
             }
 
-            // ---------------- Session Check on Load ----------------
+            // ---------------- Session Check & Initialization ----------------
             async function checkSessionAndLoad() {
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 
                 if (session) {
+                    currentUserId = session.user.id;
                     await fetchTask();
+                    await logScan(session.user.id); 
                 } else {
                     showLogin();
+                }
+            }
+            
+            // ---------------- CORE FEATURE: LOG SCAN (CREATE) ----------------
+            async function logScan(userId) {
+                // Logs the Technician's access for the audit trail
+                const { error } = await supabaseClient
+                    .from("scan")
+                    .insert([{ 
+                        task_id: taskId, 
+                        user_id: userId,
+                        scan_time: new Date().toISOString()
+                    }]);
+                
+                if (error) {
+                    console.error("Scan Log Error:", error.message);
+                } else {
+                    console.log("Task access successfully logged to scan table.");
                 }
             }
 
@@ -127,9 +212,13 @@
             loginBtn.addEventListener("click", async () => {
                 const email = emailInput.value.trim();
                 const password = passwordInput.value.trim();
-                if (!email || !password) return alert("Enter email & password");
+                if (!email || !password) {
+                    loginStatus.textContent = "Please enter both email and password.";
+                    loginStatus.classList.remove("hidden");
+                    return;
+                }
 
-                loginStatus.textContent = "Logging in...";
+                loginStatus.textContent = "Authenticating...";
                 loginStatus.classList.remove("hidden");
                 
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -139,15 +228,26 @@
                     return;
                 }
 
+                currentUserId = data.user.id;
+                // Redirect on success: Load task details and log the scan
                 await fetchTask();
+                await logScan(data.user.id);
+                loginStatus.classList.add("hidden");
             });
 
-            // ---------------- Fetch Task ----------------
+            // ---------------- Fetch Task (READ) ----------------
             async function fetchTask() {
-                const { data, error } = await supabaseClient.from("tasks").select("title, assigned_person, lab_number, description, status").eq("task_id", taskId).single();
+                initialState.classList.remove("hidden");
+                initialState.innerHTML = `<h1 class="text-xl font-semibold mt-4 text-gray-700">Fetching Task #${taskId}...</h1>`;
+
+                const { data, error } = await supabaseClient
+                    .from("tasks")
+                    .select("title, assigned_person, lab_number, description, status, priority")
+                    .eq("task_id", taskId)
+                    .single();
                 
                 if (error) {
-                    initialState.innerHTML = `<h1 class="text-red-500">Error: Task not found or fetching failed.</h1>`;
+                    initialState.innerHTML = `<h1 class="text-2xl text-red-600 font-bold">Error 404: Task not found.</h1><p class="mt-2 text-gray-500">The requested task ID does not exist or you lack permission.</p>`;
                     console.error("Task fetch error:", error);
                     return;
                 }
@@ -155,47 +255,77 @@
                 showTaskDetails(data);
             }
             
-            // ---------------- Send Notification ----------------
+            // ---------------- FEATURE: MARK AS COMPLETED (UPDATE) ----------------
+            completeTaskBtn.addEventListener("click", async () => {
+                if (!currentTaskData || currentTaskData.status === 'Completed') return;
+                
+                completeTaskBtn.disabled = true;
+                completeTaskBtn.textContent = "Updating Status...";
+                completeStatusMessage.classList.remove("hidden");
+                completeStatusMessage.textContent = "Processing...";
+                completeStatusMessage.className = "mt-3 text-blue-600 text-center font-medium";
+
+                const { error } = await supabaseClient
+                    .from("tasks")
+                    .update({ status: 'Completed' })
+                    .eq("task_id", taskId);
+
+                if (error) {
+                    completeStatusMessage.textContent = `Error completing task: ${error.message}`;
+                    completeStatusMessage.className = "mt-3 text-red-600 text-center font-medium";
+                    completeTaskBtn.disabled = false;
+                    completeTaskBtn.textContent = "Retry Completion";
+                } else {
+                    completeStatusMessage.textContent = "🎉 Task successfully marked as COMPLETED!";
+                    completeStatusMessage.className = "mt-3 text-green-600 text-center font-extrabold";
+                    
+                    // Update UI
+                    currentTaskData.status = 'Completed';
+                    showTaskDetails(currentTaskData); 
+                }
+            });
+
+            // ---------------- Send Notification (CREATE) ----------------
             sendNotification.addEventListener("click", async () => {
                 const message = notificationMessage.value.trim();
-                if (!message) return alert("Enter a message");
+                if (!message) return alert("Enter a detailed message for the notification");
 
                 sendNotification.disabled = true;
                 sendNotification.textContent = "Sending...";
                 statusMessage.classList.add("hidden");
 
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                const taskTitleText = taskTitle.textContent; // Get the title for admin context
+                const taskTitleText = taskTitle.textContent;
+                const userEmail = (await supabaseClient.auth.getUser()).data.user.email; 
 
+                // FIX: Ensure the table name 'notification' is correct based on your database schema
                 const { error } = await supabaseClient
-                    .from("notification")
+                    .from("notification") 
                     .insert([{ 
                         task_id: taskId, 
-                        user_id: user.id, 
+                        user_id: currentUserId, 
                         message, 
                         task_title: taskTitleText, 
-                        sender_email: user.email // Add sender email for better admin view
+                        sender_email: userEmail 
                     }]);
 
                 if (error) {
                     statusMessage.textContent = `Error sending: ${error.message}`;
-                    statusMessage.className = "mt-2 text-red-500 text-center font-medium";
-                    statusMessage.classList.remove("hidden");
+                    statusMessage.className = "mt-2 text-red-600 text-center font-medium";
                 } else {
                     statusMessage.textContent = "✅ Emergency Notification Sent!";
                     statusMessage.className = "mt-2 text-green-600 text-center font-medium";
-                    statusMessage.classList.remove("hidden");
                     notificationMessage.value = "";
                 }
 
+                statusMessage.classList.remove("hidden");
                 sendNotification.disabled = false;
-                sendNotification.textContent = "Send Notification";
+                sendNotification.textContent = "Send Urgent Notification";
             });
 
             // ---------------- Logout ----------------
             logoutBtn.addEventListener("click", async () => {
                 await supabaseClient.auth.signOut();
-                // Reload the page to check session again, forcing the login screen
+                // Redirect user back to the item page, forcing a new login prompt
                 window.location.reload(); 
             });
 
@@ -204,5 +334,4 @@
         });
     </script>
 </body>
-
 </html>
