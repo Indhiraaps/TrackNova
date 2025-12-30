@@ -1,280 +1,639 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TrackNova - Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="icon" type="image/png" href="favicon.png" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrackNova - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <style>
+        /* Ensures main content starts next to the sidebar on desktop */
+        @media (min-width: 768px) {
+            main {
+                margin-left: 16rem; /* Tailwind 'md:ml-64' equivalent */
+            }
+        }
+        /* Custom active state for navigation (NEW COLOR) */
+        .nav-link.active {
+            background-color: theme('colors.cyan.600'); /* Changed from indigo.600 */
+            color: white;
+            border-left: 4px solid theme('colors.teal.300'); /* Added a subtle border */
+            padding-left: 1rem !important; /* Adjust padding for border */
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
 
-  <!-- Navbar -->
-  <header class="bg-blue-600 text-white py-4 shadow-lg flex justify-between items-center px-6">
-    <h1 class="text-xl font-bold">TrackNova Dashboard</h1>
-    <!-- Hamburger for mobile -->
-    <button id="menuBtn" class="md:hidden text-white text-2xl">&#9776;</button>
-    <button id="logoutBtn" class="hidden md:block bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg">
-      Logout
-    </button>
-  </header>
-
-  <!-- Sidebar -->
-  <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform z-50">
-    <div class="p-4 border-b flex justify-between items-center">
-      <span class="font-bold text-lg">Menu</span>
-      <button id="closeMenu" class="md:hidden text-red-600 font-bold">X</button>
-    </div>
-    <nav class="p-4 space-y-2">
-      <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="addTaskSection">➕ Add Task</button>
-      <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="tasksSection">📋 Tasks</button>
-      <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="notificationsSection">🔔 Notifications</button>
-      <button class="nav-link w-full text-left px-3 py-2 rounded hover:bg-blue-100" data-target="historySection">📜 History</button>
-      <!-- Mobile Logout only -->
-      <button id="logoutBtnMobile" class="w-full bg-red-500 text-white px-3 py-2 rounded md:hidden">Logout</button>
-    </nav>
-  </aside>
-
-  <!-- Main Content -->
-  <main class="flex-grow container mx-auto px-6 py-6 md:ml-64">
-    <!-- Welcome -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 text-center mb-6">
-      <h2 class="text-2xl font-semibold mb-2">Welcome Admin 👋</h2>
-      <p class="text-gray-700 mb-2" id="userEmail"></p>
-    </div>
-
-    <!-- Sections -->
-    <section id="addTaskSection" class="content-section">
-      <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-        <h3 class="text-xl font-semibold mb-4">Add New Task</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <input id="taskTitle" type="text" placeholder="Task Title" class="p-2 border rounded-lg w-full"/>
-          <input id="taskPerson" type="text" placeholder="Assigned To" class="p-2 border rounded-lg w-full"/>
-          <input id="taskLab" type="text" placeholder="Lab Number" class="p-2 border rounded-lg w-full"/>
-          <select id="taskStatus" class="p-2 border rounded-lg w-full">
-            <option value="Pending">Pending</option>
-            <option value="Completed">Completed</option>
-          </select>
+    <header class="bg-white text-gray-800 border-b border-gray-200 py-3 shadow-md flex justify-between items-center px-6 fixed w-full z-40 md:pl-64">
+        <div class="flex items-center">
+            <button id="menuBtn" class="md:hidden text-gray-600 text-2xl mr-4 hover:text-cyan-600 transition">&#9776;</button>
+            <h1 class="text-xl font-bold text-gray-900 md:text-2xl">🗂️Dashboard Management</h1>
         </div>
-        <textarea id="taskDesc" placeholder="Task Description" class="p-2 border rounded-lg w-full mt-3"></textarea>
-        <button id="addTaskBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg mt-3 hover:bg-green-700">Add Task</button>
-      </div>
-    </section>
+        <button id="logoutBtn" class="hidden md:block bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-full text-sm transition duration-150 shadow-lg">
+            Logout
+        </button>
+    </header>
 
-    <section id="tasksSection" class="content-section hidden">
-      <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 overflow-x-auto">
-        <h3 class="text-xl font-semibold mb-4">Tasks</h3>
-        <table class="w-full table-auto border-collapse">
-          <thead class="bg-gray-200">
-            <tr>
-              <th class="p-2 border">Title</th>
-              <th class="p-2 border">Assigned To</th>
-              <th class="p-2 border">Lab</th>
-              <th class="p-2 border">Status</th>
-              <th class="p-2 border">QR</th>
-              <th class="p-2 border">Delete</th>
-            </tr>
-          </thead>
-          <tbody id="tasksTableBody">
-            <tr><td colspan="6" class="p-4 text-center text-gray-500">Loading tasks...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-teal-800 shadow-2xl transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-50 pt-16">
+        <div class="p-4 border-b border-teal-700 flex justify-between items-center h-16 absolute top-0 w-full bg-teal-900">
+            <span class="font-extrabold text-2xl text-white tracking-wider">TrackNova</span>
+            <button id="closeMenu" class="md:hidden text-white font-bold text-xl hover:text-red-300 transition">X</button>
+        </div>
+        <nav class="p-4 pt-2 space-y-2">
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150 initial-active" data-target="addTaskSection">
+                ➕ Add Task
+            </button>
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="tasksSection">
+                📋 Task List
+            </button>
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="performanceSection">
+                📈 Performance Overview 
+            </button>
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="notificationsSection">
+                🔔 Real-Time Alerts
+            </button>
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="historySection">
+                📜 Activity Log
+            </button>
+            <button id="logoutBtnMobile" class="w-full bg-red-500 text-white px-3 py-2 rounded-lg mt-6 md:hidden hover:bg-red-600 shadow-md">Logout</button>
+        </nav>
+    </aside>
 
-    <section id="notificationsSection" class="content-section hidden">
-      <div class="bg-white rounded-2xl shadow-lg p-6">
-        <h3 class="text-xl font-semibold mb-4">Notifications</h3>
-        <ul id="notificationsList" class="space-y-2">
-          <li class="text-gray-500">No notifications yet</li>
-        </ul>
-      </div>
-    </section>
+    <main class="flex-grow container mx-auto px-4 py-8 md:ml-64 pt-24">
+        <div class="bg-white rounded-2xl shadow-xl p-6 text-center mb-8 border-b-4 border-cyan-500">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-1">Welcome Back, Administrator 👋</h2>
+            <p class="text-gray-500 text-sm italic" id="userEmail"></p>
+        </div>
 
-    <section id="historySection" class="content-section hidden">
-      <div class="bg-white rounded-2xl shadow-lg p-6">
-        <h3 class="text-xl font-semibold mb-4">History</h3>
-        <ul id="historyList" class="space-y-2">
-          <li class="text-gray-500">No history yet</li>
-        </ul>
-      </div>
-    </section>
-  </main>
+        <section id="addTaskSection" class="content-section">
+            <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3 text-center">Create New Task</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    <input id="taskTitle" type="text" placeholder="Task Title (e.g., Server Maintenance)" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
+                    <select id="taskPerson" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 bg-white shadow-sm">
+                        <option value="" disabled selected>Select Assigned Technician</option>
+                        </select>
+                    <input id="taskLab" type="text" placeholder="Location / Lab Number" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
+                    <select id="taskStatus" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 bg-white shadow-sm">
+                        <option value="Pending">Pending (Initial Status)</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <textarea id="taskDesc" placeholder="Detailed Task Description and Instructions" class="p-3 border border-gray-300 rounded-xl w-full mt-6 h-32 focus:ring-cyan-500 focus:border-cyan-500 shadow-sm max-w-4xl mx-auto block"></textarea>
+                <div class="text-center mt-6">
+                    <button id="addTaskBtn" class="bg-cyan-600 text-white font-semibold px-8 py-3 rounded-full hover:bg-cyan-700 transition duration-150 shadow-lg tracking-wider">
+                        ➕ Add Task & Generate QR
+                    </button>
+                </div>
+            </div>
+        </section>
 
-  <!-- QR Modal -->
-  <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-6 relative">
-      <button id="closeQrModal" class="absolute top-2 right-2 text-red-500 font-bold">X</button>
-      <canvas id="qrCodeContainer"></canvas>
-      <a id="downloadQrBtn" class="block mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg text-center hidden">Download QR</a>
+        <section id="performanceSection" class="content-section hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">📈 Technician Performance Overview</h3>
+                <div id="performanceReport" class="space-y-4">
+                    <p class="text-gray-500 text-center p-4">Loading performance data...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tasksSection" class="content-section hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 overflow-x-auto">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">Active Task List</h3>
+                
+                <div class="mb-6">
+                    <input 
+                        id="taskSearchInput" 
+                        type="text" 
+                        placeholder="Search tasks by Title, Assigned To, or Location..." 
+                        class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" 
+                    />
+                </div>
+                <table class="w-full text-left table-auto border-collapse">
+                    <thead class="bg-gray-50 border-b border-gray-300">
+                        <tr>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Title</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Assigned To</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Location</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Status</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">QR Code</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tasksTableBody" class="divide-y divide-gray-200">
+                        <tr><td colspan="6" class="p-4 text-center text-gray-500">Loading tasks...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="notificationsSection" class="content-section hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">Real-Time Emergency Alerts 🚨</h3>
+                <ul id="notificationsList" class="space-y-4">
+                    <li class="text-gray-500 p-4 bg-gray-50 rounded-xl">Loading notifications...</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="historySection" class="content-section hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">Local Activity Log</h3>
+                <ul id="historyList" class="space-y-3">
+                    <li class="text-gray-500 p-3 bg-gray-50 rounded-xl">No history yet</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <div id="qrModal" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden items-center justify-center z-[100]">
+        <div class="bg-white rounded-xl p-8 relative shadow-2xl max-w-sm w-full">
+            <button id="closeQrModal" class="absolute top-3 right-3 text-gray-500 hover:text-red-600 text-3xl font-light transition leading-none">
+                &times;
+            </button>
+            <h4 class="text-2xl font-bold text-center mb-6 text-gray-800 border-b pb-2">Scan to Access Task</h4>
+            <div class="p-6 border-4 border-cyan-500 rounded-xl bg-gray-50 flex justify-center items-center">
+                <canvas id="qrCodeContainer" class="max-w-xs"></canvas>
+            </div>
+            <a id="downloadQrBtn" class="block mt-6 bg-cyan-600 text-white font-semibold px-4 py-3 rounded-lg text-center hover:bg-cyan-700 transition duration-150 shadow-lg" download="task_qr_code.png">
+                Download QR Image
+            </a>
+        </div>
     </div>
-  </div>
 
-  <script>
-    // Supabase Client
-    const supabase = window.supabase.createClient(
-      "https://jkynrslsfqwhsvrgzmle.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreW5yc2xzZnF3aHN2cmd6bWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMyNDQsImV4cCI6MjA3MzQwOTI0NH0.HEuMyMWchJYIKH3XGhXavpfmDrdiQeChMyk1WG13C8g"
-    );
+    <script>
+        // Supabase Client - **TECHNICAL CONFIGURATION REMAINS UNCHANGED**
+        const supabase = window.supabase.createClient(
+            "https://jkynrslsfqwhsvrgzmle.supabase.co", 
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreW5yc2xzZnF3aHN2cmd6bWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMyNDQsImV4cCI6MjA3MzQwOTI0NH0.HEuMyMWchJYIKH3XGhXavpfmDrdiQeChMyk1WG13C8g"
+        );
 
-    // DOM Elements
-    const tasksTableBody = document.getElementById("tasksTableBody");
-    const addTaskBtn = document.getElementById("addTaskBtn");
-    const qrModal = document.getElementById("qrModal");
-    const qrCodeContainer = document.getElementById("qrCodeContainer");
-    const closeQrModalBtn = document.getElementById("closeQrModal");
-    const downloadQrBtn = document.getElementById("downloadQrBtn");
-    const notificationsList = document.getElementById("notificationsList");
-    const historyList = document.getElementById("historyList");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const logoutBtnMobile = document.getElementById("logoutBtnMobile");
-    const userEmailEl = document.getElementById("userEmail");
+        // DOM Elements
+        const tasksTableBody = document.getElementById("tasksTableBody");
+        const addTaskBtn = document.getElementById("addTaskBtn");
+        const qrModal = document.getElementById("qrModal");
+        const qrCodeContainer = document.getElementById("qrCodeContainer");
+        const closeQrModalBtn = document.getElementById("closeQrModal");
+        const downloadQrBtn = document.getElementById("downloadQrBtn");
+        const notificationsList = document.getElementById("notificationsList");
+        const historyList = document.getElementById("historyList");
+        const logoutBtn = document.getElementById("logoutBtn");
+        const logoutBtnMobile = document.getElementById("logoutBtnMobile");
+        const userEmailEl = document.getElementById("userEmail");
+        
+        // NEW ELEMENTS
+        const taskSearchInput = document.getElementById("taskSearchInput");
+        const taskPersonDropdown = document.getElementById("taskPerson");
+        const performanceReportEl = document.getElementById("performanceReport");
+        
+        // Selectors for active state
+        const navLinks = document.querySelectorAll(".nav-link");
+        
+        // Sidebar Toggles
+        const menuBtn = document.getElementById("menuBtn");
+        const sidebar = document.getElementById("sidebar");
+        const closeMenu = document.getElementById("closeMenu");
 
-    // Sidebar
-    const menuBtn = document.getElementById("menuBtn");
-    const sidebar = document.getElementById("sidebar");
-    const closeMenu = document.getElementById("closeMenu");
+        menuBtn.addEventListener("click", () => sidebar.classList.remove("-translate-x-full"));
+        closeMenu.addEventListener("click", () => sidebar.classList.add("-translate-x-full"));
 
-    menuBtn.addEventListener("click", () => sidebar.classList.remove("-translate-x-full"));
-    closeMenu.addEventListener("click", () => sidebar.classList.add("-translate-x-full"));
-
-    document.querySelectorAll(".nav-link").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const target = btn.getAttribute("data-target");
-        document.querySelectorAll(".content-section").forEach(sec => sec.classList.add("hidden"));
-        document.getElementById(target).classList.remove("hidden");
-        sidebar.classList.add("-translate-x-full");
-      });
-    });
-
-    // Session
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return window.location.href = "index.html";
-      userEmailEl.textContent = "Email: " + session.user.email;
-    }
-
-    // Logout
-    function handleLogout() {
-      supabase.auth.signOut().then(() => window.location.href = "index.html");
-    }
-    logoutBtn.addEventListener("click", handleLogout);
-    logoutBtnMobile.addEventListener("click", handleLogout);
-
-    // Fetch Tasks
-    async function fetchTasks() {
-      const { data, error } = await supabase.from("tasks").select("*").order("created_at", { ascending: false });
-      if (error) return console.error(error);
-
-      tasksTableBody.innerHTML = "";
-      if (!data || data.length === 0) {
-        tasksTableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">No tasks yet</td></tr>`;
-        return;
-      }
-
-      data.forEach(task => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-gray-100";
-        tr.innerHTML = `
-          <td class="p-2 border">${task.title}</td>
-          <td class="p-2 border">${task.assigned_person}</td>
-          <td class="p-2 border">${task.lab_number}</td>
-          <td class="p-2 border">${task.status}</td>
-          <td class="p-2 border text-center">
-            <button class="bg-blue-500 text-white px-2 py-1 rounded generate-qr-btn" data-id="${task.task_id}">QR</button>
-          </td>
-          <td class="p-2 border text-center">
-            <button class="bg-red-500 text-white px-2 py-1 rounded delete-btn" data-id="${task.task_id}">Delete</button>
-          </td>
-        `;
-        tasksTableBody.appendChild(tr);
-      });
-
-      attachTaskEvents();
-    }
-
-    // Task Buttons
-    function attachTaskEvents() {
-      document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const taskId = btn.getAttribute("data-id")?.trim();
-          if (!taskId) return alert("Invalid task ID");
-          if (!confirm("Are you sure you want to delete this task?")) return;
-
-          const { error } = await supabase.from("tasks").delete().eq("task_id", taskId);
-          if (error) return alert("Failed to delete task: " + error.message);
-
-          addHistory(`Task deleted successfully: ${taskId}`);
-          fetchTasks();
+        // Correctly managing the active state for sidebar links
+        function switchSection(targetId) {
+            // Hide all content sections
+            document.querySelectorAll(".content-section").forEach(sec => sec.classList.add("hidden"));
+            // Show the target section
+            document.getElementById(targetId).classList.remove("hidden");
+            
+            // Update active link styling
+            navLinks.forEach(link => {
+                link.classList.remove("active", "text-white");
+                link.classList.add("text-teal-200");
+            });
+            const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
+            if (activeLink) {
+                activeLink.classList.add("active", "text-white");
+                activeLink.classList.remove("text-teal-200");
+            }
+            // Close sidebar on mobile after click
+            sidebar.classList.add("-translate-x-full");
+            
+            // NEW: Conditional fetching based on section
+            if (targetId === 'tasksSection') {
+                fetchTasks(); 
+            } else if (targetId === 'performanceSection') {
+                fetchPerformanceReport();
+            }
+        }
+        
+        navLinks.forEach(btn => {
+            btn.addEventListener("click", () => switchSection(btn.getAttribute("data-target")));
         });
-      });
+        
+        
+        // --------------------------------------------------------------------------------
+        // 1. AUTHENTICATION & SESSION
+        // --------------------------------------------------------------------------------
+        async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return window.location.href = "index.html";
+            userEmailEl.textContent = "Currently logged in as: " + session.user.email;
+            
+            // Initialization calls
+            fetchTechniciansAndPopulateDropdown(); // NEW
+            fetchTasks(); 
+            loadNotifications(); 
+            setupRealtimeNotifications();
+        }
 
-      document.querySelectorAll(".generate-qr-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = btn.getAttribute("data-id")?.trim();
-          if (!id) return;
-          const qrLink = `${window.location.origin}/item.html?task_id=${id}`;
+        function handleLogout() {
+            supabase.auth.signOut().then(() => window.location.href = "index.html");
+        }
+        logoutBtn.addEventListener("click", handleLogout);
+        logoutBtnMobile.addEventListener("click", handleLogout);
+        
+        // --------------------------------------------------------------------------------
+        // 2. TECHNICIAN DROPDOWN (NEW)
+        // --------------------------------------------------------------------------------
+        async function fetchTechniciansAndPopulateDropdown() {
+            const { data, error } = await supabase
+                .from('technicians')
+                .select('name')
+                .order('name', { ascending: true });
 
-          QRCode.toCanvas(qrCodeContainer, qrLink, { width: 180 });
-          downloadQrBtn.href = qrCodeContainer.toDataURL();
-          downloadQrBtn.download = `task_${id}_QR.png`;
+            if (error) {
+                console.error("Error fetching technicians:", error);
+                return;
+            }
 
-          qrModal.classList.remove("hidden");
-          downloadQrBtn.classList.remove("hidden");
+            // Clear previous options (except the disabled placeholder)
+            taskPersonDropdown.innerHTML = '<option value="" disabled selected>Select Assigned Technician</option>';
+
+            if (data) {
+                data.forEach(technician => {
+                    const option = document.createElement('option');
+                    option.value = technician.name;
+                    option.textContent = technician.name;
+                    taskPersonDropdown.appendChild(option);
+                });
+            }
+        }
+
+
+        // --------------------------------------------------------------------------------
+        // 3. PERFORMANCE REPORT (NEW)
+        // --------------------------------------------------------------------------------
+        async function fetchPerformanceReport() {
+            performanceReportEl.innerHTML = '<p class="text-gray-500 text-center p-4">Fetching and calculating report...</p>';
+
+            // 1. Fetch all tasks to calculate counts
+            const { data: tasks, error: tasksError } = await supabase
+                .from('tasks')
+                .select('assigned_person, status');
+
+            if (tasksError) {
+                performanceReportEl.innerHTML = `<p class="text-red-500 text-center p-4">Error loading task data: ${tasksError.message}</p>`;
+                return;
+            }
+
+            if (!tasks || tasks.length === 0) {
+                performanceReportEl.innerHTML = `<p class="text-gray-500 text-center p-4">No tasks available for performance calculation.</p>`;
+                return;
+            }
+            
+            // 2. Aggregate the data
+            const report = tasks.reduce((acc, task) => {
+                const person = task.assigned_person || 'Unassigned';
+                
+                if (!acc[person]) {
+                    acc[person] = { total: 0, pending: 0, completed: 0 };
+                }
+                
+                acc[person].total += 1;
+                if (task.status === 'Pending') {
+                    acc[person].pending += 1;
+                } else if (task.status === 'Completed') {
+                    acc[person].completed += 1;
+                }
+                return acc;
+            }, {});
+
+            // 3. Render the report
+            let reportHtml = `
+                <table class="w-full text-left table-auto border-collapse border border-gray-200 shadow-lg rounded-xl overflow-hidden">
+                    <thead class="bg-teal-700 text-white">
+                        <tr>
+                            <th class="p-4 text-sm font-semibold">Technician</th>
+                            <th class="p-4 text-sm font-semibold text-center">Total Tasks</th>
+                            <th class="p-4 text-sm font-semibold text-center">Pending</th>
+                            <th class="p-4 text-sm font-semibold text-center">Completed</th>
+                            <th class="p-4 text-sm font-semibold text-center">Completion Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+            `;
+            
+            for (const [person, counts] of Object.entries(report)) {
+                const completionRate = counts.total > 0 ? ((counts.completed / counts.total) * 100).toFixed(1) : 0;
+                
+                reportHtml += `
+                    <tr class="hover:bg-gray-50 transition duration-100">
+                        <td class="p-4 text-sm font-medium text-gray-800">${person}</td>
+                        <td class="p-4 text-sm font-bold text-center text-cyan-700">${counts.total}</td>
+                        <td class="p-4 text-sm text-center text-red-600">${counts.pending}</td>
+                        <td class="p-4 text-sm text-center text-green-600">${counts.completed}</td>
+                        <td class="p-4 text-sm text-center">
+                            <span class="font-bold text-lg">${completionRate}%</span>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                <div class="bg-green-500 h-1.5 rounded-full" style="width: ${completionRate}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            reportHtml += `
+                    </tbody>
+                </table>
+            `;
+            
+            performanceReportEl.innerHTML = reportHtml;
+        }
+
+
+        // --------------------------------------------------------------------------------
+        // 4. TASK CRUD & QR CODE GENERATION
+        // --------------------------------------------------------------------------------
+
+        // Task Buttons (Delete & QR)
+        function attachTaskEvents() {
+            // Delete Task
+            document.querySelectorAll(".delete-btn").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    const taskId = btn.getAttribute("data-id")?.trim();
+                    if (!taskId || !confirm("Are you sure you want to delete this task?")) return;
+
+                    const { error } = await supabase.from("tasks").delete().eq("task_id", taskId);
+                    if (error) return alert("Failed to delete task: " + error.message);
+
+                    addHistory(`Task deleted successfully: ${taskId}`);
+                    fetchTasks();
+                    fetchPerformanceReport(); // Refresh report after deletion
+                });
+            });
+
+            // Generate QR Code 
+            document.querySelectorAll(".generate-qr-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const id = btn.getAttribute("data-id")?.trim();
+                    if (!id) return;
+                    
+                    // NOTE: Use the absolute path to item.html on your hosting service
+                    const baseUrl = "https://indhiraaps.github.io/TrackNova/"; 
+                    const qrLink = `${baseUrl}item.html?task_id=${id}`;
+                    QRCode.toCanvas(qrCodeContainer, qrLink, { width: 180 }, (error) => {
+                        if(error) console.error('QR Code Generation failed', error);
+                        else {
+                            downloadQrBtn.href = qrCodeContainer.toDataURL("image/png");
+                            downloadQrBtn.download = `task_${id}_QR.png`;
+                        }
+                    });
+
+                    qrModal.classList.remove("hidden");
+                    downloadQrBtn.classList.remove("hidden");
+                });
+            });
+        }
+
+        closeQrModalBtn.addEventListener("click", () => qrModal.classList.add("hidden"));
+
+
+        // Fetch Tasks (READ)
+        async function fetchTasks() {
+            // 1. Get the search term from the input box
+            const searchTerm = taskSearchInput?.value.toLowerCase().trim() || ""; 
+            
+            // 2. Fetch the data using the CORRECT client name
+            const { data, error } = await supabaseClient
+                .from("tasks")
+                .select("task_id, title, assigned_person, lab_number, status")
+                .order("created_at", { ascending: false });
+        
+            if (error) {
+                console.error(error);
+                return; 
+            }
+        
+            let filteredTasks = data || [];
+            if (searchTerm) {
+                filteredTasks = data.filter(task => {
+                    return (
+                        task.title?.toLowerCase().includes(searchTerm) ||
+                        task.assigned_person?.toLowerCase().includes(searchTerm) ||
+                        task.lab_number?.toLowerCase().includes(searchTerm) ||
+                        task.status?.toLowerCase().includes(searchTerm)
+                    );
+                });
+            }
+        
+            // 4. Update the UI (The missing step!)
+            tasksTableBody.innerHTML = ""; // Clear the "Loading..." row
+        
+            if (filteredTasks.length === 0) {
+                tasksTableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">No matching tasks found.</td></tr>`;
+                return;
+            }
+        
+            // Map through the filtered tasks and create table rows
+            tasksTableBody.innerHTML = filteredTasks.map(task => `
+                <tr class="hover:bg-gray-50 transition border-b">
+                    <td class="p-4 text-sm font-medium">${task.title}</td>
+                    <td class="p-4 text-sm">${task.assigned_person}</td>
+                    <td class="p-4 text-sm">${task.lab_number}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${
+                            task.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-cyan-100 text-cyan-700'
+                        }">${task.status}</span>
+                    </td>
+                    <td class="p-4">
+                        <button class="bg-cyan-500 text-white px-3 py-1 rounded generate-qr-btn" data-id="${task.task_id}">QR</button>
+                    </td>
+                    <td class="p-4">
+                        <button class="bg-red-500 text-white px-3 py-1 rounded delete-btn" data-id="${task.task_id}">Delete</button>
+                    </td>
+                </tr>
+            `).join("");
+        
+            // 5. Re-attach event listeners to the new buttons
+            attachTaskEvents();
+        }
+
+            tasksTableBody.innerHTML = "";
+            if (filteredTasks?.length === 0) {
+                tasksTableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">${searchTerm ? 'No tasks found matching your search.' : 'No tasks yet'}</td></tr>`;
+                return;
+            }
+
+            filteredTasks.forEach(task => {
+                const isCompleted = task.status === 'Completed';
+                // Using full Tailwind classes instead of dynamic strings for safety
+                const statusClass = isCompleted ? 'bg-green-100 text-green-600' : 'bg-cyan-100 text-cyan-600'; 
+                
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50 transition duration-100";
+                tr.innerHTML = `
+                    <td class="p-4 text-sm font-medium">${task.title}</td>
+                    <td class="p-4 text-sm">${task.assigned_person}</td>
+                    <td class="p-4 text-sm">${task.lab_number}</td>
+                    <td class="p-4 text-sm">
+                        <span class="font-semibold ${statusClass} px-3 py-1 rounded-full text-xs">${task.status}</span>
+                    </td>
+                    <td class="p-4">
+                        <button class="bg-cyan-500 text-white text-sm px-3 py-1 rounded hover:bg-cyan-600 transition generate-qr-btn shadow-sm" data-id="${task.task_id}">QR</button>
+                    </td>
+                    <td class="p-4">
+                        <button class="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600 transition delete-btn shadow-sm" data-id="${task.task_id}">Delete</button>
+                    </td>
+                `;
+                tasksTableBody.appendChild(tr);
+            });
+
+            attachTaskEvents();
+        }
+        
+        // NEW: Add event listener for the search bar to trigger filtering on keyup
+        taskSearchInput?.addEventListener('keyup', fetchTasks);
+
+
+        // Add Task (CREATE)
+        addTaskBtn.addEventListener("click", async () => {
+            const title = document.getElementById("taskTitle").value.trim();
+            const desc = document.getElementById("taskDesc").value.trim();
+            // Get value from the <select> dropdown
+            const person = taskPersonDropdown.value.trim(); 
+            const lab = document.getElementById("taskLab").value.trim();
+            const status = document.getElementById("taskStatus").value;
+
+            if (!title || !person || !lab) return alert("Please fill all required fields (Title, Assigned To, Location)");
+
+            const { error } = await supabase.from("tasks").insert([{ 
+                title, description: desc, assigned_person: person, lab_number: lab, status 
+            }]);
+
+            if (error) return alert("Error adding task: " + error.message);
+
+            addHistory("New task added: " + title);
+
+            // Clear form fields
+            document.getElementById("taskTitle").value = "";
+            document.getElementById("taskDesc").value = "";
+            // Reset dropdown to placeholder
+            taskPersonDropdown.value = ""; 
+            document.getElementById("taskLab").value = "";
+            document.getElementById("taskStatus").value = "Pending";
+
+            // Clear search bar and refetch tasks when a new one is added
+            if (taskSearchInput) taskSearchInput.value = ""; 
+            fetchTasks();
+            fetchPerformanceReport(); // Refresh report after adding task
+            
+            switchSection('tasksSection'); // Switch to task list after adding
         });
-      });
-    }
 
-    closeQrModalBtn.addEventListener("click", () => qrModal.classList.add("hidden"));
 
-    // Add Task
-    addTaskBtn.addEventListener("click", async () => {
-      const title = document.getElementById("taskTitle").value.trim();
-      const desc = document.getElementById("taskDesc").value.trim();
-      const person = document.getElementById("taskPerson").value.trim();
-      const lab = document.getElementById("taskLab").value.trim();
-      const status = document.getElementById("taskStatus").value;
+        // --------------------------------------------------------------------------------
+        // 5. REAL-TIME NOTIFICATIONS 
+        // --------------------------------------------------------------------------------
 
-      if (!title || !person || !lab) return alert("Please fill all required fields");
+        // Utility to display a single notification
+        function displayNotification(notification) {
+            // Remove the 'Loading' or 'No notifications' placeholder if present
+            if (notificationsList.children.length === 1 && (notificationsList.children[0].textContent === "Loading notifications..." || notificationsList.children[0].textContent === "No notifications yet")) {
+                notificationsList.innerHTML = "";
+            }
+            
+            const li = document.createElement("li");
+            // Style update: More aggressive styling for alerts
+            li.className = `p-4 rounded-xl shadow-xl bg-red-100 border-l-8 border-red-700 hover:bg-red-50 transition duration-200`;
+            li.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <span class="font-extrabold text-lg text-red-800">🚨 EMERGENCY ALERT - Task: ${notification.task_title}</span>
+                    <span class="text-sm text-gray-500">${new Date(notification.created_at).toLocaleString()}</span>
+                </div>
+                <p class="mt-2 text-gray-800 font-medium border-t border-red-300 pt-2">${notification.message}</p>
+                <p class="text-xs text-cyan-600 mt-1">Sender: ${notification.sender_email} (Task ID: ${notification.task_id})</p>
+            `;
+            // Prepend new notifications
+            notificationsList.prepend(li);
+        }
 
-      const { error } = await supabase.from("tasks").insert([{ 
-        title, description: desc, assigned_person: person, lab_number: lab, status 
-      }]);
+        // Load existing notifications
+        async function loadNotifications() {
+            // Check the RLS is correct first!
+            const { data, error } = await supabase.from("notification").select("*").order("created_at", { ascending: false });
+            
+            if (error) {
+                console.error("Error loading notifications:", error);
+                notificationsList.innerHTML = `<li class="text-red-500 p-4 bg-red-100 rounded-xl">Error loading notifications. Please check RLS for SELECT on 'notification' table. Error: ${error.message}</li>`;
+                return;
+            }
 
-      if (error) return alert("Error adding task: " + error.message);
+            notificationsList.innerHTML = "";
+            if (!data || data.length === 0) {
+                notificationsList.innerHTML = `<li class="text-gray-500 p-4 bg-gray-50 rounded-xl">No notifications yet</li>`;
+                return;
+            }
+            
+            data.forEach(displayNotification);
+        }
 
-      addHistory("New task added: " + title);
+        // Setup Realtime Listener
+        function setupRealtimeNotifications() {
+            supabase
+                .channel('notifications_channel') 
+                .on('postgres_changes', { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'notification' 
+                }, (payload) => {
+                    
+                    const newTaskNotification = payload.new;
 
-      document.getElementById("taskTitle").value = "";
-      document.getElementById("taskDesc").value = "";
-      document.getElementById("taskPerson").value = "";
-      document.getElementById("taskLab").value = "";
-      document.getElementById("taskStatus").value = "Pending";
+                    displayNotification(newTaskNotification);
+                    
+                    alert(`🔔 NEW EMERGENCY NOTIFICATION! Task: ${newTaskNotification.task_title}`);
+                    addHistory(`Received EMERGENCY notification for: ${newTaskNotification.task_title} from ${newTaskNotification.sender_email}`);
+                })
+                .subscribe();
+        }
 
-      fetchTasks();
-    });
+        // --------------------------------------------------------------------------------
+        // 6. HISTORY LOGGING (Local)
+        // --------------------------------------------------------------------------------
 
-    // Notifications & History
-    function loadNotifications() {
-      notificationsList.innerHTML = `<li class="text-gray-500">Waiting for user messages...</li>`;
-    }
+        function addHistory(msg) {
+            if (historyList.children.length === 1 && historyList.children[0].textContent === "No history yet") {
+                historyList.innerHTML = "";
+            }
+            const li = document.createElement("li");
+            const now = new Date().toLocaleTimeString();
+            li.textContent = `[${now}] ${msg}`;
+            li.className = "bg-gray-100 text-gray-700 p-3 rounded-xl shadow-inner font-mono text-sm border-l-4 border-cyan-400"; // Style updated
+            historyList.prepend(li);
+        }
 
-    function addHistory(msg) {
-      if (historyList.children.length === 1 && historyList.children[0].textContent === "No history yet") {
-        historyList.innerHTML = "";
-      }
-      const li = document.createElement("li");
-      li.textContent = msg;
-      li.className = "bg-gray-100 text-gray-800 p-2 rounded shadow-sm";
-      historyList.prepend(li);
-    }
-
-    // Initialize
-    checkSession();
-    fetchTasks();
-    loadNotifications();
-  </script>
+        // --------------------------------------------------------------------------------
+        // 7. INITIALIZATION
+        // --------------------------------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            switchSection('addTaskSection');
+            checkSession();
+        });
+    </script>
 </body>
 </html>
+
+
+
+

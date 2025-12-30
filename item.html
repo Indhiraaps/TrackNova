@@ -1,198 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Task Details - TrackNova</title>
-  <!-- Tailwind for dev only -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS -->
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartTrack - Task Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <style>
+        .status-pending { color: rgb(249 115 22); font-weight: bold; } /* Tailwind orange-500 */
+        .status-completed { color: rgb(22 163 74); font-weight: bold; } /* Tailwind green-600 */
+        /* Custom styles for disabled notification button */
+        .notification-disabled {
+            @apply bg-red-300 cursor-not-allowed hover:bg-red-300;
+        }
+    </style>
 </head>
+
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
 
-<div class="w-full max-w-2xl bg-white p-6 rounded-2xl shadow-lg">
+    <div class="w-full max-w-2xl bg-white p-6 rounded-2xl shadow-lg">
 
-  <!-- Login Section -->
-  <div id="loginSection" class="space-y-3">
-    <h1 class="text-2xl font-bold mb-2 text-center">User Login</h1>
-    <input id="email" type="email" placeholder="Email" class="w-full p-2 border rounded-lg"/>
-    <input id="password" type="password" placeholder="Password" class="w-full p-2 border rounded-lg"/>
-    <button id="loginBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">Login</button>
-    <p id="loginStatus" class="text-red-500 text-center hidden"></p>
-  </div>
+        <div id="initialState" class="text-center">
+            <h1 class="text-xl font-bold mb-4">Loading Task Details...</h1>
+        </div>
 
-  <!-- Task Section (hidden until login) -->
-  <div id="taskSection" class="hidden mt-6">
-    <h1 class="text-2xl font-bold mb-4">Task Details</h1>
+        <div id="loginSection" class="hidden space-y-3 p-6 border-2 border-gray-200 rounded-xl bg-gray-50 mt-4">
+            <h1 class="text-xl font-bold mb-4 text-center text-gray-700">Login to Send Alerts</h1>
+            <input id="email" type="email" placeholder="Email" class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            <input id="password" type="password" placeholder="Password" class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            <button id="loginBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition">Login to Enable Notification</button>
+            <p id="loginStatus" class="text-red-500 text-center hidden font-medium"></p>
+        </div>
 
-    <div id="taskDetails" class="space-y-2 p-4 border rounded-lg bg-gray-50">
-      <p><strong>Title:</strong> <span id="taskTitle"></span></p>
-      <p><strong>Assigned Person:</strong> <span id="taskPerson"></span></p>
-      <p><strong>Lab Number:</strong> <span id="taskLab"></span></p>
-      <p><strong>Status:</strong> <span id="taskStatus"></span></p>
-      <p><strong>Notes:</strong> <span id="taskNotes"></span></p>
-      <p><strong>Created:</strong> <span id="taskCreated"></span></p>
+
+        <div id="taskSection" class="hidden mt-6">
+            <h1 class="text-2xl font-bold mb-4 text-center text-blue-600">Task Details</h1>
+
+            <div id="taskDetails" class="space-y-3 p-6 border-2 border-blue-100 rounded-xl bg-blue-50">
+                <p><strong>Title:</strong> <span id="taskTitle"></span></p>
+                <p><strong>Assigned Person:</strong> <span id="taskPerson"></span></p>
+                <p><strong>Lab Number:</strong> <span id="taskLab"></span></p>
+                <p><strong>Status:</strong> <span id="taskStatus" class="font-bold"></span></p>
+                <p class="border-t pt-3"><strong>Description:</strong> <span id="taskDescription" class="block mt-1 text-gray-700"></span></p>
+            </div>
+
+            <div id="notificationContainer" class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <h2 class="text-xl font-semibold mb-2 text-red-600">🚨 Send Emergency Notification</h2>
+                <textarea id="notificationMessage" class="w-full border rounded-lg p-2 focus:ring-red-500 focus:border-red-500" rows="3" placeholder="Describe the issue urgently..."></textarea>
+                <button id="sendNotification" class="mt-3 w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition notification-disabled" disabled>
+                    Login Required to Send Notification
+                </button>
+                <p id="statusMessage" class="mt-2 text-green-600 text-center font-medium hidden">✅ Notification sent successfully!</p>
+            </div>
+            
+            <button id="logoutBtn" class="w-full mt-4 text-sm text-gray-500 hover:text-red-500 hidden">Logout</button>
+        </div>
+
     </div>
 
-    <div class="mt-6">
-      <h2 class="text-xl font-semibold mb-2">Send Notification to Admin</h2>
-      <textarea id="notificationMessage" class="w-full border rounded-lg p-2" rows="3" placeholder="Write your message..."></textarea>
-      <button id="sendNotification" class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">Send Notification</button>
-      <p id="statusMessage" class="mt-2 text-green-600 font-medium hidden">✅ Notification sent successfully!</p>
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
 
-      <div class="mt-4">
-        <h3 class="text-lg font-semibold mb-2">Your Past Notifications</h3>
-        <ul id="pastNotifications" class="space-y-2 max-h-40 overflow-y-auto border p-2 rounded-lg bg-gray-50">
-          <li class="text-gray-500">Loading notifications...</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+            // ---------------- Supabase Setup ----------------
+            const SUPABASE_URL = "https://jkynrslsfqwhsvrgzmle.supabase.co";
+            const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreW5yc2xzZnF3aHN2cmd6bWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMyNDQsImV4cCI6MjA3MzQwOTI0NH0.HEuMyMWchJYIKH3XGhXavpfmDrdiQeChMyk1WG13C8g";
+            const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-</div>
+            // ---------------- DOM Elements ----------------
+            const initialState = document.getElementById("initialState");
+            const loginSection = document.getElementById("loginSection");
+            const emailInput = document.getElementById("email");
+            const passwordInput = document.getElementById("password");
+            const loginBtn = document.getElementById("loginBtn");
+            const loginStatus = document.getElementById("loginStatus");
 
-<script>
-window.addEventListener("DOMContentLoaded", () => {
+            const taskSection = document.getElementById("taskSection");
+            const taskTitle = document.getElementById("taskTitle");
+            const taskPerson = document.getElementById("taskPerson");
+            const taskLab = document.getElementById("taskLab");
+            const taskStatus = document.getElementById("taskStatus");
+            const taskDescription = document.getElementById("taskDescription");
+            const logoutBtn = document.getElementById("logoutBtn");
 
-  // ---------------- Supabase Setup ----------------
-  const SUPABASE_URL = "https://jkynrslsfqwhsvrgzmle.supabase.co"; 
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreW5yc2xzZnF3aHN2cmd6bWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMyNDQsImV4cCI6MjA3MzQwOTI0NH0.HEuMyMWchJYIKH3XGhXavpfmDrdiQeChMyk1WG13C8g"; 
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            const notificationMessage = document.getElementById("notificationMessage");
+            const sendNotification = document.getElementById("sendNotification");
+            const statusMessage = document.getElementById("statusMessage");
 
-  // ---------------- DOM Elements ----------------
-  const loginSection = document.getElementById("loginSection");
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
-  const loginBtn = document.getElementById("loginBtn");
-  const loginStatus = document.getElementById("loginStatus");
+            const urlParams = new URLSearchParams(window.location.search);
+            const taskId = urlParams.get("task_id");
 
-  const taskSection = document.getElementById("taskSection");
-  const taskTitle = document.getElementById("taskTitle");
-  const taskPerson = document.getElementById("taskPerson");
-  const taskLab = document.getElementById("taskLab");
-  const taskStatus = document.getElementById("taskStatus");
-  const taskNotes = document.getElementById("taskNotes");
-  const taskCreated = document.getElementById("taskCreated");
+            if (!taskId) {
+                initialState.innerHTML = `<h1 class="text-red-500">Error: Missing Task ID in URL.</h1>`;
+                return;
+            }
 
-  const notificationMessage = document.getElementById("notificationMessage");
-  const sendNotification = document.getElementById("sendNotification");
-  const statusMessage = document.getElementById("statusMessage");
-  const pastNotifications = document.getElementById("pastNotifications");
+            // ---------------- View Management ----------------
+            function showLogin() {
+                // If a user is not logged in, display the login area for the notification button
+                loginSection.classList.remove("hidden");
+                logoutBtn.classList.add("hidden");
+                // Disable the notification button
+                sendNotification.textContent = "Login Required to Send Notification";
+                sendNotification.disabled = true;
+                sendNotification.classList.add("notification-disabled");
+            }
+            
+            function showTaskDetails(task) {
+                initialState.classList.add("hidden");
+                taskSection.classList.remove("hidden");
+                
+                // Populate Details
+                taskTitle.textContent = task.title;
+                taskPerson.textContent = task.assigned_person;
+                taskLab.textContent = task.lab_number;
+                taskDescription.textContent = task.description || "No description provided.";
+                
+                // Status Styling
+                taskStatus.textContent = task.status;
+                taskStatus.className = task.status === 'Completed' ? 'status-completed' : 'status-pending';
+            }
+            
+            function handleUserLoggedIn(session) {
+                loginSection.classList.add("hidden");
+                logoutBtn.classList.remove("hidden");
+                
+                // Enable the notification button
+                sendNotification.textContent = "Send Notification";
+                sendNotification.disabled = false;
+                sendNotification.classList.remove("notification-disabled");
+            }
 
-  // ✅ Get Task ID from QR URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const taskId = urlParams.get("id");   // <-- updated to "id"
+            // ---------------- Session Check on Load ----------------
+            // MODIFIED: This function now only calls fetchTask() immediately.
+            // It uses the session status only to enable/disable the notification form.
+            async function checkSessionAndLoad() {
+                // 1. Fetch the task details first, as this is the primary purpose of the QR scan.
+                await fetchTask(); 
+                
+                // 2. Check session status to manage the NOTIFICATION feature only.
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (session) {
+                    handleUserLoggedIn(session);
+                } else {
+                    showLogin();
+                }
+            }
 
-  // ---------------- Login Function ----------------
-  loginBtn.addEventListener("click", async () => {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-    if (!email || !password) return alert("Enter email & password");
 
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        console.error("Login error:", error);
-        loginStatus.textContent = error.message;
-        loginStatus.classList.remove("hidden");
-        return;
-      }
+            // ---------------- Login Function ----------------
+            loginBtn.addEventListener("click", async () => {
+                const email = emailInput.value.trim();
+                const password = passwordInput.value.trim();
+                if (!email || !password) return alert("Enter email & password");
 
-      console.log("Login successful:", data);
+                loginStatus.textContent = "Logging in...";
+                loginStatus.classList.remove("hidden");
+                
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                
+                if (error) {
+                    loginStatus.textContent = `Login failed: ${error.message}`;
+                    return;
+                }
 
-      // Show task section
-      loginSection.classList.add("hidden");
-      taskSection.classList.remove("hidden");
+                loginStatus.classList.add("hidden");
+                handleUserLoggedIn(data.session);
+            });
 
-      fetchTask();
-      fetchNotifications();
 
-    } catch (err) {
-      console.error("Unexpected error:", err);
-      loginStatus.textContent = "Unexpected error occurred.";
-      loginStatus.classList.remove("hidden");
-    }
-  });
+            // ---------------- Fetch Task (Now runs on load without auth) ----------------
+            async function fetchTask() {
+                // IMPORTANT: This uses the anonymous (public) key, so RLS must allow SELECT for 'anon'.
+                const { data, error } = await supabaseClient.from("tasks").select("title, assigned_person, lab_number, description, status").eq("task_id", taskId).single();
+                
+                if (error) {
+                    initialState.innerHTML = `<h1 class="text-red-500 text-2xl font-bold">Error Fetching Task</h1>
+                                              <p class="text-gray-600 mt-2">Task not found or database access denied.</p>
+                                              <p class="text-sm text-red-400 mt-1">Check Supabase RLS for public SELECT access on the 'tasks' table.</p>`;
+                    console.error("Task fetch error (Check RLS on 'tasks' table):", error);
+                    return;
+                }
+                
+                showTaskDetails(data);
+            }
+            
+            // ---------------- Send Notification (Requires User Session) ----------------
+            sendNotification.addEventListener("click", async () => {
+                const message = notificationMessage.value.trim();
+                if (!message) return alert("Enter a message");
 
-  // ---------------- Fetch Task ----------------
-  async function fetchTask() {
-    if (!taskId) {
-      alert("No task ID provided in QR code URL!");
-      return;
-    }
+                sendNotification.disabled = true;
+                sendNotification.textContent = "Sending...";
+                statusMessage.classList.add("hidden");
 
-    const { data, error } = await supabaseClient.from("tasks").select("*").eq("task_id", taskId).single();
-    if (error) {
-      alert("Error fetching task");
-      console.error(error);
-      return;
-    }
-    taskTitle.textContent = data.title;
-    taskPerson.textContent = data.assigned_person;
-    taskLab.textContent = data.lab_number;
-    taskStatus.textContent = data.status;
-    taskNotes.textContent = data.notes || "No notes";
-    taskCreated.textContent = new Date(data.created_at).toLocaleString();
-  }
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                
+                if (!user) {
+                    alert("Authentication required to send a notification. Please log in.");
+                    sendNotification.disabled = false;
+                    sendNotification.textContent = "Send Notification";
+                    return;
+                }
 
-  // ---------------- Fetch Notifications ----------------
-  async function fetchNotifications() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
+                const taskTitleText = taskTitle.textContent;
 
-    const { data, error } = await supabaseClient
-      .from("notifications")
-      .select("*")
-      .eq("task_id", taskId)
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+                const { error } = await supabaseClient
+                    .from("notification")
+                    .insert([{
+                        task_id: taskId,
+                        user_id: user.id,
+                        message,
+                        task_title: taskTitleText,
+                        sender_email: user.email
+                    }]);
 
-    pastNotifications.innerHTML = "";
+                if (error) {
+                    statusMessage.textContent = `Error sending: ${error.message}`;
+                    statusMessage.className = "mt-2 text-red-500 text-center font-medium";
+                    statusMessage.classList.remove("hidden");
+                } else {
+                    statusMessage.textContent = "✅ Emergency Notification Sent!";
+                    statusMessage.className = "mt-2 text-green-600 text-center font-medium";
+                    statusMessage.classList.remove("hidden");
+                    notificationMessage.value = "";
+                }
 
-    if (error) {
-      pastNotifications.innerHTML = `<li class="text-red-500">Error loading notifications</li>`;
-      return;
-    }
+                sendNotification.disabled = false;
+                sendNotification.textContent = "Send Notification";
+            });
 
-    if (!data || data.length === 0) {
-      pastNotifications.innerHTML = `<li class="text-gray-500">No notifications sent yet</li>`;
-      return;
-    }
 
-    data.forEach(notif => {
-      const li = document.createElement("li");
-      li.className = "bg-blue-100 text-blue-800 p-2 rounded shadow-sm";
-      li.textContent = `${new Date(notif.created_at).toLocaleString()} - ${notif.message}`;
-      pastNotifications.appendChild(li);
-    });
-  }
+            // ---------------- Logout ----------------
+            logoutBtn.addEventListener("click", async () => {
+                await supabaseClient.auth.signOut();
+                // After logout, re-run the check to show the login prompt for notifications
+                window.location.reload(); 
+            });
 
-  // ---------------- Send Notification ----------------
-  sendNotification.addEventListener("click", async () => {
-    const message = notificationMessage.value.trim();
-    if (!message) return alert("Enter a message");
-
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return alert("Must be logged in");
-
-    const { error } = await supabaseClient
-      .from("notifications")
-      .insert([{ task_id: taskId, user_id: user.id, message, is_read: false }]);
-
-    if (error) {
-      alert("Error sending notification");
-      console.error(error);
-      return;
-    }
-
-    notificationMessage.value = "";
-    statusMessage.classList.remove("hidden");
-    setTimeout(() => statusMessage.classList.add("hidden"), 3000);
-    fetchNotifications();
-  });
-
-});
-</script>
+            // ---------------- Initialization ----------------
+            checkSessionAndLoad();
+        });
+    </script>
 </body>
 </html>
