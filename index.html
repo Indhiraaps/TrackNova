@@ -100,7 +100,7 @@
      }
 
     // 🛑 IMPORTANT: Replace [YOUR-USERNAME] and [YOUR-REPO-NAME] with your actual data
-    const GITHUB_BASE_URL = "https://indhiraaps.github.io/TrackNova/";
+    const GITHUB_BASE_URL = "https://indhiraaps.github.io/SmartTrack/";
 
     async function loginUser() {
         const email = document.getElementById("login-email").value.trim();
@@ -115,9 +115,9 @@
         } else {
             setStatus("✅ Login successful! Redirecting...", "green");
             setTimeout(() => {
-                // 🚀 FIX APPLIED HERE: Using the absolute path to dashboard.html
-                window.location.href = GITHUB_BASE_URL + "dashboard.html";
+              window.location.href = "dashboard.html";
             }, 1500);
+
         }
     }
 
