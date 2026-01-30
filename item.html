@@ -1,67 +1,357 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SmartTrack - Task Details</title>
+    <title>TrackNova | Task Details</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .status-pending { color: rgb(249 115 22); font-weight: bold; } /* Tailwind orange-500 */
-        .status-completed { color: rgb(22 163 74); font-weight: bold; } /* Tailwind green-600 */
-        /* Custom styles for disabled notification button */
-        .notification-disabled {
-            @apply bg-red-300 cursor-not-allowed hover:bg-red-300;
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #3b82f6;
+            --background-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --sidebar-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .status-pending {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .status-completed {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .notification-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        input, textarea, select {
+            transition: all 0.2s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
 </head>
-
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
-
-    <div class="w-full max-w-2xl bg-white p-6 rounded-2xl shadow-lg">
-
-        <div id="initialState" class="text-center">
-            <h1 class="text-xl font-bold mb-4">Loading Task Details...</h1>
-        </div>
-
-        <div id="loginSection" class="hidden space-y-3 p-6 border-2 border-gray-200 rounded-xl bg-gray-50 mt-4">
-            <h1 class="text-xl font-bold mb-4 text-center text-gray-700">Login to Send Alerts</h1>
-            <input id="email" type="email" placeholder="Email" class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-            <input id="password" type="password" placeholder="Password" class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-            <button id="loginBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition">Login to Enable Notification</button>
-            <p id="loginStatus" class="text-red-500 text-center hidden font-medium"></p>
-        </div>
-
-
-        <div id="taskSection" class="hidden mt-6">
-            <h1 class="text-2xl font-bold mb-4 text-center text-blue-600">Task Details</h1>
-
-            <div id="taskDetails" class="space-y-3 p-6 border-2 border-blue-100 rounded-xl bg-blue-50">
-                <p><strong>Title:</strong> <span id="taskTitle"></span></p>
-                <p><strong>Assigned Person:</strong> <span id="taskPerson"></span></p>
-                <p><strong>Lab Number:</strong> <span id="taskLab"></span></p>
-                <p><strong>Status:</strong> <span id="taskStatus" class="font-bold"></span></p>
-                <p class="border-t pt-3"><strong>Description:</strong> <span id="taskDescription" class="block mt-1 text-gray-700"></span></p>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl glass-card rounded-2xl p-8 fade-in">
+        <!-- Header with Logo -->
+        <div class="flex items-center justify-between mb-8 pb-6 border-b border-slate-200">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                    <i class="fas fa-tasks text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">TrackNova</h1>
+                    <p class="text-sm text-slate-500">Task Management System</p>
+                </div>
             </div>
+            <div class="hidden md:block">
+                <div class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                    <i class="fas fa-qrcode mr-1"></i>
+                    QR Code Access
+                </div>
+            </div>
+        </div>
 
-            <div id="notificationContainer" class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <h2 class="text-xl font-semibold mb-2 text-red-600">🚨 Send Emergency Notification</h2>
-                <textarea id="notificationMessage" class="w-full border rounded-lg p-2 focus:ring-red-500 focus:border-red-500" rows="3" placeholder="Describe the issue urgently..."></textarea>
-                <button id="sendNotification" class="mt-3 w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition notification-disabled" disabled>
-                    Login Required to Send Notification
-                </button>
-                <p id="statusMessage" class="mt-2 text-green-600 text-center font-medium hidden">✅ Notification sent successfully!</p>
+        <!-- Initial Loading State -->
+        <div id="initialState" class="text-center py-12">
+            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center mx-auto mb-6">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">Loading Task Details</h1>
+            <p class="text-slate-600">Please wait while we fetch the task information...</p>
+        </div>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="hidden fade-in">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-lock text-blue-600 text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800 mb-2">Authentication Required</h1>
+                <p class="text-slate-600 mb-6">Login to enable emergency notifications for this task</p>
             </div>
             
-            <button id="logoutBtn" class="w-full mt-4 text-sm text-gray-500 hover:text-red-500 hidden">Logout</button>
+            <div class="space-y-5 max-w-md mx-auto">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input id="email" type="email" placeholder="you@example.com" class="w-full p-3.5 pl-12 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Password</label>
+                    <div class="relative">
+                        <i class="fas fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input id="password" type="password" placeholder="Enter your password" class="w-full p-3.5 pl-12 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                    </div>
+                </div>
+                
+                <button id="loginBtn" class="w-full btn-primary text-white font-semibold py-3.5 rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Login to Enable Notifications</span>
+                </button>
+                
+                <p id="loginStatus" class="mt-4 text-center hidden">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm"></span>
+                </p>
+                
+                <div class="text-center pt-4 border-t border-slate-200">
+                    <p class="text-sm text-slate-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        You can still view task details without logging in
+                    </p>
+                </div>
+            </div>
         </div>
 
+        <!-- Task Details Section -->
+        <div id="taskSection" class="hidden fade-in">
+            <!-- Task Info Card -->
+            <div class="glass-card rounded-2xl p-6 mb-8 border border-slate-200">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-800">Task Details</h1>
+                        <p class="text-slate-600 mt-1">View and manage task information</p>
+                    </div>
+                    <div>
+                        <span id="taskStatus" class="status-badge">
+                            <i class="fas fa-circle text-xs mr-2"></i>
+                            <span>Loading...</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-5">
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-heading text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-medium text-slate-500">Task Title</h3>
+                                    <h2 id="taskTitle" class="text-xl font-bold text-slate-800 mt-1">Loading...</h2>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user-tie text-emerald-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-medium text-slate-500">Assigned Technician</h3>
+                                    <p id="taskPerson" class="text-lg font-semibold text-slate-800 mt-1">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-map-marker-alt text-amber-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-medium text-slate-500">Location / Lab</h3>
+                                    <p id="taskLab" class="text-lg font-semibold text-slate-800 mt-1">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="h-full border border-slate-200 rounded-xl p-5 bg-slate-50">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-file-alt text-indigo-600"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-slate-800">Task Description</h3>
+                            </div>
+                            
+                            <div class="h-40 overflow-y-auto pr-2">
+                                <p id="taskDescription" class="text-slate-700 leading-relaxed">
+                                    Loading task description...
+                                </p>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-t border-slate-200 text-xs text-slate-500">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                This task was accessed via QR code scan
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Notification Card -->
+            <div id="notificationContainer" class="glass-card rounded-2xl p-6 border border-red-200 bg-gradient-to-br from-red-50 to-white">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4 relative">
+                            <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                            <div class="notification-badge absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-red-800">Emergency Notification</h2>
+                            <p class="text-red-600 text-sm">Send urgent alerts about this task</p>
+                        </div>
+                    </div>
+                    <div id="authStatus" class="text-sm">
+                        <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600">
+                            <i class="fas fa-user-lock mr-1"></i>
+                            Authentication Required
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-red-700 mb-2">
+                            <i class="fas fa-comment-dots mr-1"></i>
+                            Alert Message
+                        </label>
+                        <textarea id="notificationMessage" class="w-full p-4 border border-red-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white shadow-sm" rows="4" placeholder="Describe the emergency or urgent issue with this task..."></textarea>
+                        <p class="text-xs text-red-500 mt-2">
+                            <i class="fas fa-lightbulb mr-1"></i>
+                            Be specific about the issue to ensure a quick response
+                        </p>
+                    </div>
+                    
+                    <button id="sendNotification" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                        <span id="sendNotificationText">Login Required to Send Notification</span>
+                    </button>
+                    
+                    <div id="statusMessage" class="hidden mt-4 p-4 rounded-xl border text-center">
+                        <!-- Success/Error messages will appear here -->
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-6 border-t border-red-200">
+                    <div class="flex items-center text-sm text-red-600">
+                        <i class="fas fa-shield-alt mr-2"></i>
+                        <span>Emergency notifications are logged and monitored by the admin team</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logout Button -->
+            <div class="mt-6 text-center">
+                <button id="logoutBtn" class="text-sm text-slate-500 hover:text-red-600 transition-colors hidden">
+                    <i class="fas fa-sign-out-alt mr-1"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 pt-6 border-t border-slate-200 text-center">
+            <p class="text-sm text-slate-500">
+                <i class="fas fa-copyright mr-1"></i>
+                2023 TrackNova Task Management System
+            </p>
+            <p class="text-xs text-slate-400 mt-1">
+                This page was accessed via QR code scan
+            </p>
+        </div>
     </div>
 
     <script>
         window.addEventListener("DOMContentLoaded", () => {
-
             // ---------------- Supabase Setup ----------------
             const SUPABASE_URL = "https://jkynrslsfqwhsvrgzmle.supabase.co";
             const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreW5yc2xzZnF3aHN2cmd6bWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMyNDQsImV4cCI6MjA3MzQwOTI0NH0.HEuMyMWchJYIKH3XGhXavpfmDrdiQeChMyk1WG13C8g";
@@ -85,25 +375,46 @@
 
             const notificationMessage = document.getElementById("notificationMessage");
             const sendNotification = document.getElementById("sendNotification");
+            const sendNotificationText = document.getElementById("sendNotificationText");
             const statusMessage = document.getElementById("statusMessage");
+            const authStatus = document.getElementById("authStatus");
 
             const urlParams = new URLSearchParams(window.location.search);
             const taskId = urlParams.get("task_id");
 
             if (!taskId) {
-                initialState.innerHTML = `<h1 class="text-red-500">Error: Missing Task ID in URL.</h1>`;
+                initialState.innerHTML = `
+                    <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-exclamation-circle text-red-600 text-2xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-red-600 mb-2">Missing Task ID</h1>
+                    <p class="text-slate-600 mb-4">No task ID found in the URL parameters.</p>
+                    <a href="javascript:history.back()" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Go Back
+                    </a>
+                `;
                 return;
             }
 
             // ---------------- View Management ----------------
             function showLogin() {
-                // If a user is not logged in, display the login area for the notification button
                 loginSection.classList.remove("hidden");
+                taskSection.classList.add("hidden");
                 logoutBtn.classList.add("hidden");
-                // Disable the notification button
-                sendNotification.textContent = "Login Required to Send Notification";
+                
+                // Update notification button
+                sendNotificationText.textContent = "Login Required to Send Notification";
                 sendNotification.disabled = true;
-                sendNotification.classList.add("notification-disabled");
+                sendNotification.classList.add("bg-red-300", "hover:bg-red-300", "cursor-not-allowed");
+                
+                // Update auth status
+                authStatus.innerHTML = `
+                    <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600">
+                        <i class="fas fa-user-lock mr-1"></i>
+                        Authentication Required
+                    </span>
+                `;
             }
             
             function showTaskDetails(task) {
@@ -111,31 +422,46 @@
                 taskSection.classList.remove("hidden");
                 
                 // Populate Details
-                taskTitle.textContent = task.title;
-                taskPerson.textContent = task.assigned_person;
-                taskLab.textContent = task.lab_number;
+                taskTitle.textContent = task.title || "Untitled Task";
+                taskPerson.textContent = task.assigned_person || "Unassigned";
+                taskLab.textContent = task.lab_number || "No location specified";
                 taskDescription.textContent = task.description || "No description provided.";
                 
                 // Status Styling
-                taskStatus.textContent = task.status;
-                taskStatus.className = task.status === 'Completed' ? 'status-completed' : 'status-pending';
+                const status = task.status || 'Pending';
+                taskStatus.innerHTML = `
+                    <i class="fas fa-circle text-xs mr-2 ${status === 'Completed' ? 'text-green-500' : 'text-amber-500'}"></i>
+                    <span>${status}</span>
+                `;
+                taskStatus.className = `status-badge ${status === 'Completed' ? 'status-completed' : 'status-pending'}`;
             }
             
             function handleUserLoggedIn(session) {
                 loginSection.classList.add("hidden");
+                taskSection.classList.remove("hidden");
                 logoutBtn.classList.remove("hidden");
                 
-                // Enable the notification button
-                sendNotification.textContent = "Send Notification";
+                // Enable notification button
+                sendNotificationText.textContent = "Send Emergency Notification";
                 sendNotification.disabled = false;
-                sendNotification.classList.remove("notification-disabled");
+                sendNotification.classList.remove("bg-red-300", "hover:bg-red-300", "cursor-not-allowed");
+                sendNotification.classList.add("bg-red-500", "hover:bg-red-600");
+                
+                // Update auth status
+                authStatus.innerHTML = `
+                    <span class="px-3 py-1 rounded-full bg-green-100 text-green-700">
+                        <i class="fas fa-user-check mr-1"></i>
+                        Logged In as ${session.user.email.split('@')[0]}
+                    </span>
+                `;
+                
+                // Show success toast
+                showToast("Successfully logged in! You can now send emergency notifications.", "success");
             }
 
             // ---------------- Session Check on Load ----------------
-            // MODIFIED: This function now only calls fetchTask() immediately.
-            // It uses the session status only to enable/disable the notification form.
             async function checkSessionAndLoad() {
-                // 1. Fetch the task details first, as this is the primary purpose of the QR scan.
+                // 1. Fetch the task details first
                 await fetchTask(); 
                 
                 // 2. Check session status to manage the NOTIFICATION feature only.
@@ -148,38 +474,59 @@
                 }
             }
 
-
             // ---------------- Login Function ----------------
             loginBtn.addEventListener("click", async () => {
                 const email = emailInput.value.trim();
                 const password = passwordInput.value.trim();
-                if (!email || !password) return alert("Enter email & password");
+                
+                if (!email || !password) {
+                    showToast("Please enter both email and password", "error");
+                    return;
+                }
 
-                loginStatus.textContent = "Logging in...";
-                loginStatus.classList.remove("hidden");
+                // Update button state
+                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Logging in...';
+                loginBtn.disabled = true;
                 
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 
                 if (error) {
-                    loginStatus.textContent = `Login failed: ${error.message}`;
+                    loginStatus.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 text-red-700">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        Login failed: ${error.message}
+                    </span>`;
+                    loginStatus.classList.remove("hidden");
+                    
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>Login to Enable Notifications</span>';
+                    loginBtn.disabled = false;
                     return;
                 }
 
                 loginStatus.classList.add("hidden");
                 handleUserLoggedIn(data.session);
+                
+                // Reset login button
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>Login to Enable Notifications</span>';
+                loginBtn.disabled = false;
             });
-
 
             // ---------------- Fetch Task (Now runs on load without auth) ----------------
             async function fetchTask() {
-                // IMPORTANT: This uses the anonymous (public) key, so RLS must allow SELECT for 'anon'.
                 const { data, error } = await supabaseClient.from("tasks").select("title, assigned_person, lab_number, description, status").eq("task_id", taskId).single();
                 
                 if (error) {
-                    initialState.innerHTML = `<h1 class="text-red-500 text-2xl font-bold">Error Fetching Task</h1>
-                                              <p class="text-gray-600 mt-2">Task not found or database access denied.</p>
-                                              <p class="text-sm text-red-400 mt-1">Check Supabase RLS for public SELECT access on the 'tasks' table.</p>`;
-                    console.error("Task fetch error (Check RLS on 'tasks' table):", error);
+                    initialState.innerHTML = `
+                        <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-database text-red-600 text-2xl"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-red-600 mb-2">Task Not Found</h1>
+                        <p class="text-slate-600 mb-4">The requested task could not be found in the system.</p>
+                        <div class="text-sm text-slate-500 bg-slate-100 p-4 rounded-xl">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Error: ${error.message}
+                        </div>
+                    `;
+                    console.error("Task fetch error:", error);
                     return;
                 }
                 
@@ -189,18 +536,21 @@
             // ---------------- Send Notification (Requires User Session) ----------------
             sendNotification.addEventListener("click", async () => {
                 const message = notificationMessage.value.trim();
-                if (!message) return alert("Enter a message");
+                if (!message) {
+                    showToast("Please enter a message for the notification", "error");
+                    return;
+                }
 
+                // Update button state
+                sendNotification.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
                 sendNotification.disabled = true;
-                sendNotification.textContent = "Sending...";
-                statusMessage.classList.add("hidden");
 
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 
                 if (!user) {
-                    alert("Authentication required to send a notification. Please log in.");
+                    showToast("Authentication required to send notifications. Please log in.", "error");
+                    sendNotification.innerHTML = '<i class="fas fa-paper-plane"></i><span>Send Emergency Notification</span>';
                     sendNotification.disabled = false;
-                    sendNotification.textContent = "Send Notification";
                     return;
                 }
 
@@ -217,30 +567,104 @@
                     }]);
 
                 if (error) {
-                    statusMessage.textContent = `Error sending: ${error.message}`;
-                    statusMessage.className = "mt-2 text-red-500 text-center font-medium";
+                    statusMessage.innerHTML = `
+                        <div class="flex items-center justify-center p-4 bg-red-50 border border-red-200 rounded-xl">
+                            <i class="fas fa-exclamation-circle text-red-600 text-xl mr-3"></i>
+                            <div>
+                                <p class="font-medium text-red-700">Failed to send notification</p>
+                                <p class="text-sm text-red-600 mt-1">${error.message}</p>
+                            </div>
+                        </div>
+                    `;
                     statusMessage.classList.remove("hidden");
                 } else {
-                    statusMessage.textContent = "✅ Emergency Notification Sent!";
-                    statusMessage.className = "mt-2 text-green-600 text-center font-medium";
+                    statusMessage.innerHTML = `
+                        <div class="flex items-center justify-center p-4 bg-green-50 border border-green-200 rounded-xl">
+                            <i class="fas fa-check-circle text-green-600 text-xl mr-3"></i>
+                            <div>
+                                <p class="font-medium text-green-700">Notification Sent Successfully!</p>
+                                <p class="text-sm text-green-600 mt-1">Admin team has been alerted about this issue.</p>
+                            </div>
+                        </div>
+                    `;
                     statusMessage.classList.remove("hidden");
                     notificationMessage.value = "";
+                    
+                    // Auto-hide success message after 5 seconds
+                    setTimeout(() => {
+                        statusMessage.classList.add("hidden");
+                    }, 5000);
                 }
 
+                // Reset button state
+                sendNotification.innerHTML = '<i class="fas fa-paper-plane"></i><span>Send Emergency Notification</span>';
                 sendNotification.disabled = false;
-                sendNotification.textContent = "Send Notification";
             });
-
 
             // ---------------- Logout ----------------
             logoutBtn.addEventListener("click", async () => {
-                await supabaseClient.auth.signOut();
-                // After logout, re-run the check to show the login prompt for notifications
-                window.location.reload(); 
+                const { error } = await supabaseClient.auth.signOut();
+                
+                if (!error) {
+                    showToast("Successfully logged out", "success");
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
             });
+
+            // ---------------- Toast Notification Function ----------------
+            function showToast(message, type = "info") {
+                // Remove existing toast if any
+                const existingToast = document.querySelector('.custom-toast');
+                if (existingToast) existingToast.remove();
+                
+                const colors = {
+                    success: "bg-emerald-100 border-emerald-300 text-emerald-800",
+                    error: "bg-red-100 border-red-300 text-red-800",
+                    info: "bg-blue-100 border-blue-300 text-blue-800"
+                };
+                
+                const icons = {
+                    success: "fa-check-circle",
+                    error: "fa-exclamation-circle",
+                    info: "fa-info-circle"
+                };
+                
+                const toast = document.createElement("div");
+                toast.className = `custom-toast fixed top-6 right-6 z-50 px-5 py-3 rounded-xl border ${colors[type]} shadow-lg fade-in`;
+                toast.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <i class="fas ${icons[type]}"></i>
+                        <span class="font-medium">${message}</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.classList.add("opacity-0", "transition-opacity", "duration-300");
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
 
             // ---------------- Initialization ----------------
             checkSessionAndLoad();
+            
+            // Add enter key support for login
+            emailInput.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") loginBtn.click();
+            });
+            
+            passwordInput.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") loginBtn.click();
+            });
+            
+            // Add enter key support for notification message
+            notificationMessage.addEventListener("keypress", (e) => {
+                if (e.key === "Enter" && e.ctrlKey) {
+                    sendNotification.click();
+                }
+            });
         });
     </script>
 </body>

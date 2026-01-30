@@ -3,149 +3,536 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TrackNova - Admin Dashboard</title>
+    <title>TrackNova | Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="favicon.png" />
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #3b82f6;
+            --background-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --sidebar-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            overflow-x: hidden;
+        }
+        
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+        
+        .sidebar-glass {
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+        }
+        
+        .task-row {
+            transition: all 0.2s ease;
+        }
+        
+        .task-row:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+        }
+        
+        .notification-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         @media (min-width: 768px) {
             main { margin-left: 16rem; }
         }
-        .nav-link.active {
-            background-color: theme('colors.cyan.600');
-            color: white;
-            border-left: 4px solid theme('colors.teal.300');
-            padding-left: 1rem !important;
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
+<body class="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
 
-    <header class="bg-white text-gray-800 border-b border-gray-200 py-3 shadow-md flex justify-between items-center px-6 fixed w-full z-40 md:pl-64">
-        <div class="flex items-center">
-            <button id="menuBtn" class="md:hidden text-gray-600 text-2xl mr-4 hover:text-cyan-600 transition">&#9776;</button>
-            <h1 class="text-xl font-bold text-gray-900 md:text-2xl">🗂️Dashboard Management</h1>
+    <!-- Header -->
+    <header class="glass-card border-b border-slate-200 py-3 shadow-sm flex justify-between items-center px-6 fixed w-full z-40 md:pl-64">
+        <div class="flex items-center space-x-4">
+            <button id="menuBtn" class="md:hidden text-slate-600 text-xl hover:text-primary transition-all duration-200">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                    <i class="fas fa-tachometer-alt text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-semibold text-slate-800">Dashboard Management</h1>
+                    <p class="text-xs text-slate-500" id="userEmail"></p>
+                </div>
+            </div>
         </div>
-        <button id="logoutBtn" class="hidden md:block bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-full text-sm transition duration-150 shadow-lg">
-            Logout
-        </button>
+        
+        <div class="flex items-center space-x-4">
+            <div class="relative hidden md:block">
+                <div class="notification-badge absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                <button class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-bell text-slate-600"></i>
+                </button>
+            </div>
+            <button id="logoutBtn" class="hidden md:flex items-center space-x-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-200 shadow-md">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </div>
     </header>
 
-    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-teal-800 shadow-2xl transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-50 pt-16">
-        <div class="p-4 border-b border-teal-700 flex justify-between items-center h-16 absolute top-0 w-full bg-teal-900">
-            <span class="font-extrabold text-2xl text-white tracking-wider">TrackNova</span>
-            <button id="closeMenu" class="md:hidden text-white font-bold text-xl hover:text-red-300 transition">X</button>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar-glass fixed left-0 top-0 w-64 h-full shadow-xl transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-50 pt-16">
+        <div class="p-6 border-b border-slate-700 flex justify-between items-center h-16 absolute top-0 w-full">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                    <i class="fas fa-database text-white"></i>
+                </div>
+                <span class="font-bold text-xl text-white tracking-tight">TrackNova</span>
+            </div>
+            <button id="closeMenu" class="md:hidden text-slate-300 font-bold text-xl hover:text-white transition">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
-        <nav class="p-4 pt-2 space-y-2">
-            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="addTaskSection">
-                ➕ Add Task
+        
+        <nav class="p-4 pt-6 space-y-2">
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-slate-200 hover:bg-slate-700 hover:text-white transition-all duration-200 flex items-center space-x-3 group" data-target="addTaskSection">
+                <div class="w-8 h-8 rounded-lg bg-slate-700 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-all duration-200">
+                    <i class="fas fa-plus text-sm"></i>
+                </div>
+                <span class="font-medium">Create Task</span>
             </button>
-            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="tasksSection">
-                📋 Task List
+            
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-slate-200 hover:bg-slate-700 hover:text-white transition-all duration-200 flex items-center space-x-3 group" data-target="tasksSection">
+                <div class="w-8 h-8 rounded-lg bg-slate-700 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-all duration-200">
+                    <i class="fas fa-tasks text-sm"></i>
+                </div>
+                <span class="font-medium">Task Management</span>
             </button>
-            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="performanceSection">
-                📈 Performance Overview 
+            
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-slate-200 hover:bg-slate-700 hover:text-white transition-all duration-200 flex items-center space-x-3 group" data-target="performanceSection">
+                <div class="w-8 h-8 rounded-lg bg-slate-700 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-all duration-200">
+                    <i class="fas fa-chart-line text-sm"></i>
+                </div>
+                <span class="font-medium">Performance Analytics</span>
             </button>
-            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="notificationsSection">
-                🔔 Real-Time Alerts
+            
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-slate-200 hover:bg-slate-700 hover:text-white transition-all duration-200 flex items-center space-x-3 group" data-target="notificationsSection">
+                <div class="w-8 h-8 rounded-lg bg-slate-700 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-all duration-200 relative">
+                    <i class="fas fa-bell text-sm"></i>
+                    <div class="notification-badge absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                </div>
+                <span class="font-medium">Real-Time Alerts</span>
             </button>
-            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-teal-200 hover:bg-teal-700 transition duration-150" data-target="historySection">
-                📜 Activity Log
+            
+            <button class="nav-link w-full text-left px-4 py-3 rounded-lg text-slate-200 hover:bg-slate-700 hover:text-white transition-all duration-200 flex items-center space-x-3 group" data-target="historySection">
+                <div class="w-8 h-8 rounded-lg bg-slate-700 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-all duration-200">
+                    <i class="fas fa-history text-sm"></i>
+                </div>
+                <span class="font-medium">Activity Log</span>
             </button>
-            <button id="logoutBtnMobile" class="w-full bg-red-500 text-white px-3 py-2 rounded-lg mt-6 md:hidden hover:bg-red-600 shadow-md">Logout</button>
+            
+            <button id="logoutBtnMobile" class="w-full bg-gradient-to-r from-red-500 to-rose-600 text-white px-4 py-3 rounded-lg mt-6 md:hidden hover:from-red-600 hover:to-rose-700 shadow-md flex items-center justify-center space-x-2 transition-all duration-200">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
         </nav>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-slate-700">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                    <i class="fas fa-user text-white"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-white">Administrator</p>
+                    <p class="text-xs text-slate-400">Admin Panel</p>
+                </div>
+            </div>
+        </div>
     </aside>
 
+    <!-- Main Content -->
     <main class="flex-grow container mx-auto px-4 py-8 md:ml-64 pt-24">
-        <div class="bg-white rounded-2xl shadow-xl p-6 text-center mb-8 border-b-4 border-cyan-500">
-            <h2 class="text-3xl font-extrabold text-gray-900 mb-1">Welcome Back, Administrator 👋</h2>
-            <p class="text-gray-500 text-sm italic" id="userEmail"></p>
+        <!-- Welcome Header -->
+        <div class="glass-card rounded-2xl shadow-lg p-8 mb-8 border border-slate-200 fade-in">
+            <div class="flex flex-col md:flex-row md:items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Welcome Back, <span class="gradient-text">Administrator</span> 👋</h2>
+                    <p class="text-slate-600">Manage tasks, track performance, and monitor system alerts from your dashboard.</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <div class="inline-flex items-center space-x-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg">
+                        <i class="fas fa-clock"></i>
+                        <span id="currentTime" class="font-medium"></span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <section id="addTaskSection" class="content-section">
-            <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3 text-center">Create New Task</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                    <input id="taskTitle" type="text" placeholder="Task Title (e.g., Server Maintenance)" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
-                    <select id="taskPerson" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 bg-white shadow-sm">
-                        <option value="" disabled selected>Select Assigned Technician</option>
-                    </select>
-                    <input id="taskLab" type="text" placeholder="Location / Lab Number" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
-                    <select id="taskStatus" class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 bg-white shadow-sm">
-                        <option value="Pending">Pending (Initial Status)</option>
-                        <option value="Completed">Completed</option>
-                    </select>
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 fade-in">
+            <div class="stat-card glass-card rounded-xl p-6 border border-slate-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium">Active Tasks</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-2" id="activeTasksCount">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-tasks text-blue-600 text-xl"></i>
+                    </div>
                 </div>
-                <textarea id="taskDesc" placeholder="Detailed Task Description and Instructions" class="p-3 border border-gray-300 rounded-xl w-full mt-6 h-32 focus:ring-cyan-500 focus:border-cyan-500 shadow-sm max-w-4xl mx-auto block"></textarea>
-                <div class="text-center mt-6">
-                    <button id="addTaskBtn" class="bg-cyan-600 text-white font-semibold px-8 py-3 rounded-full hover:bg-cyan-700 transition duration-150 shadow-lg tracking-wider">
-                        ➕ Add Task & Generate QR
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <p class="text-xs text-slate-500 flex items-center">
+                        <i class="fas fa-arrow-up text-green-500 mr-1"></i>
+                        <span>Updated in real-time</span>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="stat-card glass-card rounded-xl p-6 border border-slate-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium">Pending Tasks</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-2" id="pendingTasksCount">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <i class="fas fa-clock text-amber-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <p class="text-xs text-slate-500 flex items-center">
+                        <i class="fas fa-exclamation-circle text-amber-500 mr-1"></i>
+                        <span>Requires attention</span>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="stat-card glass-card rounded-xl p-6 border border-slate-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium">Technicians</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-2" id="techniciansCount">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <i class="fas fa-users text-emerald-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <p class="text-xs text-slate-500 flex items-center">
+                        <i class="fas fa-user-check text-emerald-500 mr-1"></i>
+                        <span>Available for assignment</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Creation Section -->
+        <section id="addTaskSection" class="content-section fade-in">
+            <div class="glass-card rounded-2xl shadow-lg p-8 mb-8 border border-slate-200">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">Create New Task</h3>
+                        <p class="text-slate-600 mt-1">Assign tasks to technicians with detailed instructions</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-plus-circle text-blue-600"></i>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Task Title</label>
+                        <input id="taskTitle" type="text" placeholder="e.g., Server Maintenance" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Assigned Technician</label>
+                        <select id="taskPerson" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm transition-all duration-200">
+                            <option value="" disabled selected>Select technician</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Location / Lab</label>
+                        <input id="taskLab" type="text" placeholder="e.g., Lab 3B, Server Room" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                        <select id="taskStatus" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm transition-all duration-200">
+                            <option value="Pending">Pending</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="max-w-4xl mx-auto mt-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Task Description</label>
+                    <textarea id="taskDesc" placeholder="Provide detailed instructions and requirements for this task..." class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm h-40 transition-all duration-200"></textarea>
+                </div>
+                
+                <div class="text-center mt-8">
+                    <button id="addTaskBtn" class="btn-primary text-white font-semibold px-8 py-3.5 rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 mx-auto">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Create Task & Generate QR</span>
                     </button>
                 </div>
             </div>
         </section>
 
-        <section id="performanceSection" class="content-section hidden">
-            <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">📈 Technician Performance Overview</h3>
+        <!-- Performance Analytics Section -->
+        <section id="performanceSection" class="content-section hidden fade-in">
+            <div class="glass-card rounded-2xl shadow-lg p-8 mb-8 border border-slate-200">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">Performance Analytics</h3>
+                        <p class="text-slate-600 mt-1">Track technician performance and task completion metrics</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-emerald-600"></i>
+                    </div>
+                </div>
+                
                 <div id="performanceReport" class="space-y-4">
-                    <p class="text-gray-500 text-center p-4">Loading performance data...</p>
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <span class="ml-3 text-slate-600">Loading performance data...</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section id="tasksSection" class="content-section hidden">
-            <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 overflow-x-auto">
-                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">Active Task List</h3>
-                <div class="mb-6">
-                    <input id="taskSearchInput" type="text" placeholder="Search tasks by Title, Assigned To, or Location..." class="p-3 border border-gray-300 rounded-xl w-full focus:ring-cyan-500 focus:border-cyan-500 shadow-sm" />
+        <!-- Task Management Section -->
+        <section id="tasksSection" class="content-section hidden fade-in">
+            <div class="glass-card rounded-2xl shadow-lg p-8 mb-8 border border-slate-200">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">Task Management</h3>
+                        <p class="text-slate-600 mt-1">View, filter, and manage all assigned tasks</p>
+                    </div>
+                    
+                    <div class="mt-4 md:mt-0 w-full md:w-auto">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                            <input id="taskSearchInput" type="text" placeholder="Search tasks by title, technician, or location..." class="w-full p-3.5 pl-12 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200" />
+                        </div>
+                    </div>
                 </div>
-                <table class="w-full text-left table-auto border-collapse">
-                    <thead class="bg-gray-50 border-b border-gray-300">
-                        <tr>
-                            <th class="p-4 text-sm font-semibold text-gray-600">Title</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600">Assigned To</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600">Location</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600">Status</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600">QR Code</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tasksTableBody" class="divide-y divide-gray-200">
-                        <tr><td colspan="6" class="p-4 text-center text-gray-500">Loading tasks...</td></tr>
-                    </tbody>
-                </table>
+                
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="text-left p-4 text-sm font-semibold text-slate-700">Task Details</th>
+                                <th class="text-left p-4 text-sm font-semibold text-slate-700">Assigned To</th>
+                                <th class="text-left p-4 text-sm font-semibold text-slate-700">Location</th>
+                                <th class="text-left p-4 text-sm font-semibold text-slate-700">Status</th>
+                                <th class="text-left p-4 text-sm font-semibold text-slate-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasksTableBody" class="divide-y divide-slate-100">
+                            <tr class="task-row">
+                                <td colspan="5" class="p-8 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                                            <i class="fas fa-tasks text-slate-400 text-2xl"></i>
+                                        </div>
+                                        <p class="text-slate-500">Loading tasks...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6 flex items-center justify-between text-sm text-slate-500">
+                    <div class="flex items-center space-x-1">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Click on QR button to generate task QR code</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="flex items-center space-x-1 text-blue-600 hover:text-blue-800 transition-colors">
+                            <i class="fas fa-download"></i>
+                            <span>Export</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section id="notificationsSection" class="content-section hidden">
-            <div class="bg-white rounded-2xl shadow-xl p-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">Real-Time Emergency Alerts 🚨</h3>
-                <ul id="notificationsList" class="space-y-4">
-                    <li class="text-gray-500 p-4 bg-gray-50 rounded-xl">Loading notifications...</li>
-                </ul>
+        <!-- Real-Time Alerts Section -->
+        <section id="notificationsSection" class="content-section hidden fade-in">
+            <div class="glass-card rounded-2xl shadow-lg p-8 mb-8 border border-slate-200">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">Real-Time Alerts</h3>
+                        <p class="text-slate-600 mt-1">Monitor urgent notifications and system alerts</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center relative">
+                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                            <div class="notification-badge absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                    <ul id="notificationsList">
+                        <li class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <div class="flex items-center justify-center">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                                <span class="text-slate-600">Loading notifications...</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </section>
 
-        <section id="historySection" class="content-section hidden">
-            <div class="bg-white rounded-2xl shadow-xl p-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-100 pb-3">Local Activity Log</h3>
-                <ul id="historyList" class="space-y-3">
-                    <li class="text-gray-500 p-3 bg-gray-50 rounded-xl">No history yet</li>
-                </ul>
+        <!-- Activity Log Section -->
+        <section id="historySection" class="content-section hidden fade-in">
+            <div class="glass-card rounded-2xl shadow-lg p-8 mb-8 border border-slate-200">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">Activity Log</h3>
+                        <p class="text-slate-600 mt-1">Track all system activities and user actions</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-history text-indigo-600"></i>
+                    </div>
+                </div>
+                
+                <div class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                    <ul id="historyList">
+                        <li class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center text-slate-500">
+                            No activity recorded yet
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="mt-6 pt-6 border-t border-slate-200 flex items-center justify-between">
+                    <div class="text-sm text-slate-500">
+                        <i class="fas fa-database mr-1"></i>
+                        <span>Log entries are stored locally</span>
+                    </div>
+                    <button id="clearHistoryBtn" class="text-sm text-slate-500 hover:text-red-600 transition-colors">
+                        <i class="fas fa-trash-alt mr-1"></i>
+                        <span>Clear Log</span>
+                    </button>
+                </div>
             </div>
         </section>
     </main>
 
-    <div id="qrModal" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden items-center justify-center z-[100]">
-        <div class="bg-white rounded-xl p-8 relative shadow-2xl max-w-sm w-full">
-            <button id="closeQrModal" class="absolute top-3 right-3 text-gray-500 hover:text-red-600 text-3xl font-light transition leading-none">&times;</button>
-            <h4 class="text-2xl font-bold text-center mb-6 text-gray-800 border-b pb-2">Scan to Access Task</h4>
-            <div class="p-6 border-4 border-cyan-500 rounded-xl bg-gray-50 flex justify-center items-center">
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100] fade-in">
+        <div class="glass-card rounded-2xl p-8 relative shadow-2xl max-w-md w-full mx-4 border border-slate-200">
+            <button id="closeQrModal" class="absolute top-4 right-4 text-slate-500 hover:text-red-600 text-2xl font-light transition leading-none w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 rounded-xl bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-qrcode text-blue-600 text-2xl"></i>
+                </div>
+                <h4 class="text-2xl font-bold text-slate-800">Task QR Code</h4>
+                <p class="text-slate-600 mt-1">Scan to access task details</p>
+            </div>
+            
+            <div class="p-6 border-2 border-dashed border-blue-200 rounded-2xl bg-gradient-to-br from-blue-50 to-white flex justify-center items-center">
                 <canvas id="qrCodeContainer" class="max-w-xs"></canvas>
             </div>
-            <a id="downloadQrBtn" class="block mt-6 bg-cyan-600 text-white font-semibold px-4 py-3 rounded-lg text-center hover:bg-cyan-700 transition duration-150 shadow-lg" download="task_qr_code.png">Download QR Image</a>
+            
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a id="downloadQrBtn" class="btn-primary text-white font-medium px-4 py-3.5 rounded-lg text-center hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2" download="task_qr_code.png">
+                    <i class="fas fa-download"></i>
+                    <span>Download QR</span>
+                </a>
+                <button id="printQrBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-3.5 rounded-lg text-center transition-all duration-200 flex items-center justify-center space-x-2">
+                    <i class="fas fa-print"></i>
+                    <span>Print</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -163,6 +550,7 @@
         const qrCodeContainer = document.getElementById("qrCodeContainer");
         const closeQrModalBtn = document.getElementById("closeQrModal");
         const downloadQrBtn = document.getElementById("downloadQrBtn");
+        const printQrBtn = document.getElementById("printQrBtn");
         const notificationsList = document.getElementById("notificationsList");
         const historyList = document.getElementById("historyList");
         const logoutBtn = document.getElementById("logoutBtn");
@@ -175,6 +563,21 @@
         const sidebar = document.getElementById("sidebar");
         const menuBtn = document.getElementById("menuBtn");
         const closeMenu = document.getElementById("closeMenu");
+        const currentTimeEl = document.getElementById("currentTime");
+        const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+        const activeTasksCountEl = document.getElementById("activeTasksCount");
+        const pendingTasksCountEl = document.getElementById("pendingTasksCount");
+        const techniciansCountEl = document.getElementById("techniciansCount");
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateString = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+            currentTimeEl.textContent = `${dateString} • ${timeString}`;
+        }
+        updateTime();
+        setInterval(updateTime, 60000);
 
         // --- Navigation Logic ---
         menuBtn.addEventListener("click", () => sidebar.classList.remove("-translate-x-full"));
@@ -185,12 +588,12 @@
             document.getElementById(targetId).classList.remove("hidden");
             navLinks.forEach(link => {
                 link.classList.remove("active", "text-white");
-                link.classList.add("text-teal-200");
+                link.classList.add("text-slate-200");
             });
             const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
             if (activeLink) {
                 activeLink.classList.add("active", "text-white");
-                activeLink.classList.remove("text-teal-200");
+                activeLink.classList.remove("text-slate-200");
             }
             sidebar.classList.add("-translate-x-full");
             if (targetId === 'tasksSection') fetchTasks(); 
@@ -199,17 +602,18 @@
 
         navLinks.forEach(btn => {
             btn.addEventListener("click", () => switchSection(btn.getAttribute("data-target")));
-        }); 
+        });
 
         // --- Auth & Session ---
         async function checkSession() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) return window.location.href = "index.html";
-            userEmailEl.textContent = "Currently logged in as: " + session.user.email;
+            userEmailEl.textContent = session.user.email;
             fetchTechniciansAndPopulateDropdown();
             fetchTasks(); 
             loadNotifications(); 
             setupRealtimeNotifications();
+            updateStats();
         }
 
         function handleLogout() {
@@ -229,13 +633,16 @@
                 opt.textContent = tech.name;
                 taskPersonDropdown.appendChild(opt);
             });
+            
+            // Update technicians count
+            techniciansCountEl.textContent = data?.length || 0;
         }
 
         async function fetchTasks() {
             const searchTerm = taskSearchInput?.value.toLowerCase().trim() || ""; 
             const { data, error } = await supabaseClient
                 .from("tasks")
-                .select("task_id, title, assigned_person, lab_number, status")
+                .select("task_id, title, assigned_person, lab_number, status, description")
                 .order("created_at", { ascending: false });        
 
             if (error) return console.error(error);
@@ -246,48 +653,104 @@
                     task.title?.toLowerCase().includes(searchTerm) ||
                     task.assigned_person?.toLowerCase().includes(searchTerm) ||
                     task.lab_number?.toLowerCase().includes(searchTerm) ||
-                    task.status?.toLowerCase().includes(searchTerm)
+                    task.status?.toLowerCase().includes(searchTerm) ||
+                    task.description?.toLowerCase().includes(searchTerm)
                 );
             }
 
+            // Update stats
+            updateTaskStats(data || []);
+
             tasksTableBody.innerHTML = ""; 
             if (filteredTasks.length === 0) {
-                tasksTableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">${searchTerm ? 'No matches found' : 'No tasks yet'}</td></tr>`;
+                tasksTableBody.innerHTML = `
+                    <tr class="task-row">
+                        <td colspan="5" class="p-8 text-center">
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                                    <i class="fas fa-search text-slate-400 text-2xl"></i>
+                                </div>
+                                <p class="text-slate-700 font-medium mb-1">No tasks found</p>
+                                <p class="text-slate-500 text-sm">${searchTerm ? 'Try a different search term' : 'Create your first task to get started'}</p>
+                            </div>
+                        </td>
+                    </tr>`;
                 return;
             }
 
             tasksTableBody.innerHTML = filteredTasks.map(task => `
-                <tr class="hover:bg-gray-50 transition border-b">
-                    <td class="p-4 text-sm font-medium">${task.title}</td>
-                    <td class="p-4 text-sm">${task.assigned_person}</td>
-                    <td class="p-4 text-sm">${task.lab_number}</td>
+                <tr class="task-row hover:bg-slate-50">
                     <td class="p-4">
-                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${task.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-cyan-100 text-cyan-700'}">
+                        <div class="font-medium text-slate-800">${task.title}</div>
+                        <div class="text-sm text-slate-500 mt-1 truncate max-w-xs">${task.description || 'No description provided'}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-user text-blue-600 text-xs"></i>
+                            </div>
+                            <span class="font-medium">${task.assigned_person}</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-map-marker-alt text-emerald-600 text-xs"></i>
+                            </div>
+                            <span>${task.lab_number}</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${task.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                            ${task.status === 'Completed' ? '<i class="fas fa-check-circle mr-1"></i>' : '<i class="fas fa-clock mr-1"></i>'}
                             ${task.status}
                         </span>
                     </td>
-                    <td class="p-4"><button class="bg-cyan-500 text-white px-3 py-1 rounded generate-qr-btn" data-id="${task.task_id}">QR</button></td>
-                    <td class="p-4"><button class="bg-red-500 text-white px-3 py-1 rounded delete-btn" data-id="${task.task_id}">Delete</button></td>
+                    <td class="p-4">
+                        <div class="flex space-x-2">
+                            <button class="generate-qr-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center space-x-1" data-id="${task.task_id}">
+                                <i class="fas fa-qrcode"></i>
+                                <span>QR</span>
+                            </button>
+                            <button class="delete-btn bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center space-x-1" data-id="${task.task_id}">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </td>
                 </tr>
             `).join("");
             attachTaskEvents();
+        }
+
+        function updateTaskStats(tasks) {
+            const activeTasks = tasks.length;
+            const pendingTasks = tasks.filter(t => t.status === 'Pending').length;
+            
+            activeTasksCountEl.textContent = activeTasks;
+            pendingTasksCountEl.textContent = pendingTasks;
         }
 
         function attachTaskEvents() {
             document.querySelectorAll(".delete-btn").forEach(btn => {
                 btn.onclick = async () => {
                     const id = btn.getAttribute("data-id");
-                    if (!confirm("Delete this task?")) return;
+                    if (!confirm("Are you sure you want to delete this task?")) return;
                     const { error } = await supabaseClient.from("tasks").delete().eq("task_id", id);
-                    if (error) alert(error.message);
-                    else { addHistory(`Deleted task: ${id}`); fetchTasks(); }
+                    if (error) {
+                        showToast("Error deleting task: " + error.message, "error");
+                    } else { 
+                        addHistory(`Deleted task: ${id}`); 
+                        fetchTasks(); 
+                        showToast("Task deleted successfully", "success");
+                    }
                 };
             });
             document.querySelectorAll(".generate-qr-btn").forEach(btn => {
                 btn.onclick = () => {
                     const id = btn.getAttribute("data-id");
                     const qrLink = `https://indhiraaps.github.io/TrackNova/item.html?task_id=${id}`;
-                    QRCode.toCanvas(qrCodeContainer, qrLink, { width: 180 }, (err) => {
+                    QRCode.toCanvas(qrCodeContainer, qrLink, { width: 200, margin: 2 }, (err) => {
                         if (!err) {
                             downloadQrBtn.href = qrCodeContainer.toDataURL("image/png");
                             qrModal.classList.remove("hidden");
@@ -298,6 +761,7 @@
         }
 
         closeQrModalBtn.onclick = () => qrModal.classList.add("hidden");
+        printQrBtn.onclick = () => window.print();
 
         addTaskBtn.addEventListener("click", async () => {
             const title = document.getElementById("taskTitle").value.trim();
@@ -306,21 +770,45 @@
             const lab = document.getElementById("taskLab").value.trim();
             const status = document.getElementById("taskStatus").value;
 
-            if (!title || !person || !lab) return alert("Fill all fields");
+            if (!title || !person || !lab) {
+                showToast("Please fill all required fields", "error");
+                return;
+            }
 
-            const { error } = await supabaseClient.from("tasks").insert([{ title, description: desc, assigned_person: person, lab_number: lab, status }]);
-            if (error) return alert(error.message);
+            const { error } = await supabaseClient.from("tasks").insert([{ 
+                title, 
+                description: desc, 
+                assigned_person: person, 
+                lab_number: lab, 
+                status 
+            }]);
+            
+            if (error) {
+                showToast("Error creating task: " + error.message, "error");
+                return;
+            }
 
-            addHistory("Added task: " + title);
+            addHistory("Added new task: " + title);
+            showToast("Task created successfully", "success");
+            
+            // Clear form
             document.getElementById("taskTitle").value = "";
             document.getElementById("taskDesc").value = "";
-            switchSection('tasksSection');
+            document.getElementById("taskLab").value = "";
+            taskPersonDropdown.selectedIndex = 0;
+            
+            // Refresh tasks
+            fetchTasks();
         });
 
         // --- Performance & Notifications ---
         async function fetchPerformanceReport() {
             const { data: tasks, error } = await supabaseClient.from('tasks').select('assigned_person, status');
-            if (error) return;
+            if (error) {
+                performanceReportEl.innerHTML = `<div class="p-4 bg-red-50 text-red-700 rounded-xl">Error loading performance data</div>`;
+                return;
+            }
+            
             const report = tasks.reduce((acc, t) => {
                 const p = t.assigned_person || 'Unassigned';
                 if (!acc[p]) acc[p] = { total: 0, completed: 0 };
@@ -329,46 +817,169 @@
                 return acc;
             }, {});
 
-            let html = `<table class="w-full border shadow-sm rounded-xl overflow-hidden"><thead class="bg-teal-700 text-white"><tr><th class="p-3">Technician</th><th class="p-3">Tasks</th><th class="p-3">Rate</th></tr></thead><tbody>`;
-            for (const [name, stats] of Object.entries(report)) {
-                const rate = ((stats.completed / stats.total) * 100).toFixed(0);
-                html += `<tr class="border-b"><td class="p-3">${name}</td><td class="p-3 text-center">${stats.total}</td><td class="p-3 text-center font-bold">${rate}%</td></tr>`;
+            if (Object.keys(report).length === 0) {
+                performanceReportEl.innerHTML = `<div class="p-4 bg-slate-50 text-slate-600 rounded-xl text-center">No performance data available</div>`;
+                return;
             }
-            performanceReportEl.innerHTML = html + `</tbody></table>`;
+
+            let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
+            for (const [name, stats] of Object.entries(report)) {
+                const rate = stats.total > 0 ? ((stats.completed / stats.total) * 100).toFixed(0) : 0;
+                const colorClass = rate >= 80 ? 'bg-emerald-100 text-emerald-700' : 
+                                 rate >= 60 ? 'bg-blue-100 text-blue-700' : 
+                                 rate >= 40 ? 'bg-amber-100 text-amber-700' : 
+                                              'bg-red-100 text-red-700';
+                
+                html += `
+                    <div class="glass-card border border-slate-200 rounded-xl p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user-tie text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800">${name}</h4>
+                                    <p class="text-sm text-slate-500">Technician</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm font-semibold ${colorClass}">
+                                ${rate}%
+                            </span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-600">Completed</span>
+                                <span class="font-medium">${stats.completed}/${stats.total}</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2">
+                                <div class="h-2 rounded-full ${rate >= 80 ? 'bg-emerald-500' : rate >= 60 ? 'bg-blue-500' : rate >= 40 ? 'bg-amber-500' : 'bg-red-500'}" style="width: ${rate}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            performanceReportEl.innerHTML = html + `</div>`;
         }
 
         async function loadNotifications() {
             const { data } = await supabaseClient.from("notification").select("*").order("created_at", { ascending: false });
-            notificationsList.innerHTML = data?.length ? "" : "<li>No notifications yet</li>";
+            notificationsList.innerHTML = data?.length ? "" : `
+                <li class="p-6 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                    <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <p class="text-slate-700 font-medium">All systems operational</p>
+                    <p class="text-slate-500 text-sm mt-1">No alerts at this time</p>
+                </li>
+            `;
             data?.forEach(n => displayNotification(n));
         }
 
         function displayNotification(n) {
             const li = document.createElement("li");
-            li.className = "p-4 bg-red-50 border-l-4 border-red-500 rounded shadow-sm mb-2";
-            li.innerHTML = `<div class="font-bold text-red-800">🚨 EMERGENCY: ${n.task_title}</div><div class="text-sm">${n.message}</div>`;
+            li.className = "glass-card border border-red-200 rounded-xl p-5 mb-4 fade-in";
+            li.innerHTML = `
+                <div class="flex items-start">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-red-800">🚨 ${n.task_title || 'Emergency Alert'}</h4>
+                            <span class="text-xs text-slate-500">${new Date(n.created_at).toLocaleTimeString()}</span>
+                        </div>
+                        <p class="text-slate-700 mt-2">${n.message}</p>
+                        <div class="mt-3 pt-3 border-t border-red-100 flex space-x-3">
+                            <button class="text-xs text-red-600 hover:text-red-800 font-medium">Acknowledge</button>
+                            <button class="text-xs text-slate-600 hover:text-slate-800 font-medium">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            `;
             notificationsList.prepend(li);
         }
 
         function setupRealtimeNotifications() {
             supabaseClient.channel('any').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notification' }, payload => {
                 displayNotification(payload.new);
-                alert("NEW ALERT: " + payload.new.task_title);
+                showToast(`New alert: ${payload.new.task_title}`, "alert");
             }).subscribe();
         }
 
         function addHistory(msg) {
-            if (historyList.innerText.includes("No history")) historyList.innerHTML = "";
+            if (historyList.innerText.includes("No activity")) historyList.innerHTML = "";
             const li = document.createElement("li");
-            li.className = "bg-gray-50 p-2 rounded text-sm font-mono border-l-2 border-cyan-400";
-            li.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            li.className = "glass-card border border-slate-200 rounded-xl p-4 fade-in";
+            li.innerHTML = `
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                        <i class="fas fa-history text-indigo-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-800">${msg}</p>
+                        <p class="text-xs text-slate-500 mt-1">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • ${new Date().toLocaleDateString()}</p>
+                    </div>
+                </div>
+            `;
             historyList.prepend(li);
+            
+            // Limit to 50 history items
+            const items = historyList.querySelectorAll('li');
+            if (items.length > 50) {
+                items[items.length - 1].remove();
+            }
         }
 
-        // Init
+        clearHistoryBtn.addEventListener("click", () => {
+            if (confirm("Clear all activity log entries?")) {
+                historyList.innerHTML = `<li class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center text-slate-500">No activity recorded yet</li>`;
+                showToast("Activity log cleared", "success");
+            }
+        });
+
+        // Utility function for toast notifications
+        function showToast(message, type = "info") {
+            const toast = document.createElement("div");
+            const colors = {
+                success: "bg-emerald-100 border-emerald-300 text-emerald-800",
+                error: "bg-red-100 border-red-300 text-red-800",
+                alert: "bg-amber-100 border-amber-300 text-amber-800",
+                info: "bg-blue-100 border-blue-300 text-blue-800"
+            };
+            
+            toast.className = `fixed top-24 right-6 z-50 px-5 py-3 rounded-xl border ${colors[type]} shadow-lg fade-in`;
+            toast.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'alert' ? 'bell' : 'info-circle'}"></i>
+                    <span class="font-medium">${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "transition-opacity", "duration-300");
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Update stats
+        async function updateStats() {
+            const { data: tasks } = await supabaseClient.from("tasks").select("*");
+            const { data: technicians } = await supabaseClient.from("technicians").select("*");
+            
+            if (tasks) {
+                updateTaskStats(tasks);
+            }
+            if (technicians) {
+                techniciansCountEl.textContent = technicians.length;
+            }
+        }
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
             taskSearchInput?.addEventListener('keyup', fetchTasks);
+            setInterval(updateStats, 30000); // Update stats every 30 seconds
         });
     </script>
 </body>
